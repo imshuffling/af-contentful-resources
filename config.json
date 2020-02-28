@@ -1,0 +1,97 @@
+config = [
+    {
+        "fields": [
+            {
+                "name": "foobar",
+                "label": "Barfo",
+                "instruction": "Lorem ipsum dolor set amet",
+                "type": "text",
+                "validation": "",
+                "value": "",
+                "placeholder": "Fooing the Bar"
+            },
+            {
+                "label": "Stock Recommendations",
+                "instruction": "Lorem ipsum dolor set amet",
+                "type": "repeater",
+                "subfields": [
+                    {
+                        "name": "barfoo",
+                        "label": "Barfoo",
+                        "instruction": "Lorem ipsum dolor set amet",
+                        "type": "text",
+                        "validation": "",
+                        "value": "",
+                        "placeholder": "Barring the foo"
+                    },
+                    {
+                        "name": "action",
+                        "label": "Action to Take",
+                        "instruction": "Blah blah blah",
+                        "type": "multiselect",
+                        "validation": "",
+                        "value": [ "buy", "sell" ],
+                        "options": [
+                            {
+                                "value": "",
+                                "label": "Select"
+                            },
+                            {
+                                "value": "buy",
+                                "label": "Buy to Open"
+                            },
+                            {
+                                "value": "sell",
+                                "label": "Sell to Open"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "radiohead",
+                        "label": "Radio Gaga",
+                        "instruction": "Blah blah blah",
+                        "type": "radio",
+                        "validation": "",
+                        "value": "sell",
+                        "options": [
+                            {
+                                "value": "",
+                                "label": "Select"
+                            },
+                            {
+                                "value": "buy",
+                                "label": "Buy to Open"
+                            },
+                            {
+                                "value": "sell",
+                                "label": "Sell to Open"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "checky",
+                        "label": "Action to Take",
+                        "instruction": "Blah blah blah",
+                        "type": "checkbox",
+                        "validation": "",
+                        "value": [ "buy", "sell" ],
+                        "options": [
+                            {
+                                "value": "",
+                                "label": "Select"
+                            },
+                            {
+                                "value": "buy",
+                                "label": "Buy to Open"
+                            },
+                            {
+                                "value": "sell",
+                                "label": "Sell to Open"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

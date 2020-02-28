@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://contentful.github.io/ui-extensions-sdk/cf-extension.css">
+    <link rel="stylesheet" href="forms.css">
+    <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="config.json"></script>
+    <script>
+        let fieldsArray = config;
+        var app = document.querySelector('#repeater');
+
+
+
+
+    //'use strict';
+    window.contentfulExtension.init(function(api) {
+        api.window.startAutoResizer();
+        api.field.setValue({ "name": "Rose", "age": 20, "car": "" });
+
+
+
+        // console.log(api);
+
+        var inputEl = document.querySelector('.cf-form-input');
+        var field = api.field;
+
+        field.setValue({ "name": "Rose", "age": 20, "car": "" });
+
+        // Callback for changes of the field value.
+        // var detachValueChangeHandler = field.onValueChanged(valueChangeHandler);
+
+        // Handler for external field value changes (e.g. when multiple authors are working on the same entry).
+        function valueChangeHandler(value) {
+            // console.log(value);
+            // console.log('stop');
+            inputEl.value = JSON.stringify(value) || '';
+            // console.log('go');
+        }
+
+
+        // console.log(api.field.getValue());
+
+    });
+    </script>
+    <style>
+    .cf-form-field__row {
+        border: 1px solid #ccc;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        background: gray;
+    }
+
+    .cf-form-field__col {
+        width: 100%;
+        flex: auto;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="cf-form-wrap" id="repeater"></div>
+    <button class="cf-btn-primary" id="output">Add</button>
+    <script>
+
+
+        // var wizards = ['Hermione', 'Neville', 'Gandalf'];
+        var app = document.querySelector('#repeater');
+        var html = '';
+        var fields = '';
+        var fieldsHtml = '';
+        app.innerHTML = fieldsArray.map(function( item ) {
+
+            // console.log(item);
+
+            // Add title
+            html += typeof item.title !== 'undefined' ? '<h3 class="cf-form-field__title">' + item.title + '</h3>' : '';
+            // html += '<div class="cf-form-field cf-form-field__' + item.type + '">';
+
+            fields = item.fields;
+
+            // console.log(fields);
+
+            html += fields.map(function( field ) {
+
+                // console.log(field);
+
+                var rows = '';
+
+                // rows = buildField(field);
+
+                rows = field.type == 'repeater' ? buildRepeater(field) : buildField(field) ;
+
+
+
+                // fieldsHtml += '</div>';
+                return '<div class="cf-form-row cf-form-row__' + field.type + '">' + rows + '</div>';
+
+            }).join('');            
+
+            html += '</div>';
+
+            return html;
+
+
+        }).join('');
+
+    // TODO:
+    // Assign single off var
+    // Assign repeeater vars
+    $('#output').on('click', function() {
+        var foobar = [];
+        var repeater = $('.cf-form-row__repeater');
+        var rows = repeater.length;
+
+        for (var i = 0; i < rows; i++) {
+            var row = $(repeater[i]);
+            var inputFields = row.find('.cf-form-input');
+            var columns = inputFields.length;
+
+            // console.log(inputFields.length);
+
+            var obj = {};
+
+            for (var x = 0; x < columns; x++) {
+                // console.log($(inputFields[x]).val());
+                var key = inputFields[x].name;
+                var val = inputFields[x].value;
+                obj[key] = val;
+
+
+            }
+
+            foobar.push(obj);
+        }
+
+        console.log(foobar);
+
+        //api.field.setValue(foobar);
+
+    });
+
+
+
+    function buildField( field ) {
+        if ( typeof field === 'undefined' ) return '';
+
+        var rows = '';
+
+        switch (field.type) {
+            case 'text':
+            case 'email':
+            case 'number':
+                rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + '" value="' + field.value + '" placeholder="' + field.placeholder + '" >';
+                break;
+            case 'textarea':
+                rows += '<textarea class="cf-form-input" name="' + field.name + '" placeholder="' + field.placeholder + '" >' + field.value + '</textarea>';
+                break;
+            case 'select':
+                var options = '';
+                field.options.forEach( function( option ) {
+                    var selected = field.value == option.value ? 'selected' : '' ;
+                    options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                });
+                rows += '<select class="cf-form-input" name="' + field.name + '" ' + multiple + '>' + options + '</select>';
+                break;
+            case 'multiselect':
+                var options = '';
+                field.options.forEach( function( option ) {
+                    var selected = field.value.includes( option.value ) ? 'selected' : '';
+                    options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                });
+                rows += '<select class="cf-form-input" name="' + field.name + '" multiple>' + options + '</select>';
+                break;
+            case 'radio':
+                field.options.forEach( function( option ) {
+                    var checked = field.value == option.value ? 'checked' : '' ;
+                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + ' " value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                });
+                break;
+            case 'checkbox':
+                field.options.forEach( function( option ) {
+                    var checked = field.value.includes( option.value ) ? 'checked' : '';
+                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + ' " value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                });
+                break;
+            case 'reference':
+                rows += '<h2>DEFAULT</h2>';
+                break;
+            default:
+                rows += '<h2>DEFAULT</h2>';
+        }
+
+        return '<div class="cf-form-col cf-form-col__' + field.type + '">' + rows + '</div>';
+
+    }
+
+    function buildRepeater( field ) {
+        if ( typeof field === 'undefined' ) return '';
+        var foobar = '';
+        field.subfields.forEach( function( item ) {
+            foobar += buildField( item );
+        });
+        return foobar;        
+    }
+
+    </script>
+</body>
