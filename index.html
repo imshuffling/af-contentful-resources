@@ -7,27 +7,27 @@
     <link rel="stylesheet" href="forms.css">
     <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="config.json"></script>
+    <script src="existing.json"></script>
     <script>
-        let fieldsArray = config;
-        var app = document.querySelector('#repeater');
 
-
-
-
-    //'use strict';
+    'use strict';
     window.contentfulExtension.init(function(api) {
+        
+
+        // Automatically adjust UI Extension size in the Web App
         api.window.startAutoResizer();
-        api.field.setValue({ "name": "Rose", "age": 20, "car": "" });
-
-
 
         // console.log(api);
 
-        var inputEl = document.querySelector('.cf-form-input');
+        // var inputEl = document.querySelector('.cf-form-input');
         var field = api.field;
 
-        field.setValue({ "name": "Rose", "age": 20, "car": "" });
+        console.log('field:');
+        console.log(field);
+
 
         // Callback for changes of the field value.
         // var detachValueChangeHandler = field.onValueChanged(valueChangeHandler);
@@ -40,172 +40,219 @@
             // console.log('go');
         }
 
-
-        // console.log(api.field.getValue());
-
     });
-    </script>
-    <style>
-    .cf-form-field__row {
-        border: 1px solid #ccc;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        background: gray;
-    }
 
-    .cf-form-field__col {
-        width: 100%;
-        flex: auto;
-    }
-    </style>
+
+    </script>
 </head>
 
 <body>
     <div class="cf-form-wrap" id="repeater"></div>
-    <button class="cf-btn-primary" id="output">Add</button>
+    <button class="cf-btn-primary" id="generate">Generate</button>
+    <button class="cf-btn-secondary" id="add">Add Row</button>
     <script>
 
+    // TODO: make this init function
+    // Build HTML for repeater
 
-        // var wizards = ['Hermione', 'Neville', 'Gandalf'];
-        var app = document.querySelector('#repeater');
-        var html = '';
-        var fields = '';
-        var fieldsHtml = '';
-        app.innerHTML = fieldsArray.map(function( item ) {
+    var target = document.querySelector('#repeater');
+    var rows = '';
+    var html = '';
+    var existing = existing ? existing : [{}] ;
+    // Get old data
 
-            // console.log(item);
+    existing.forEach(function( data, index, array ){
+        // console.log(foobar);
+        // console.log(index);
+        // console.log(array);
 
-            // Add title
-            html += typeof item.title !== 'undefined' ? '<h3 class="cf-form-field__title">' + item.title + '</h3>' : '';
-            // html += '<div class="cf-form-field cf-form-field__' + item.type + '">';
-
-            fields = item.fields;
-
-            // console.log(fields);
-
-            html += fields.map(function( field ) {
-
-                // console.log(field);
-
-                var rows = '';
-
-                // rows = buildField(field);
-
-                rows = field.type == 'repeater' ? buildRepeater(field) : buildField(field) ;
-
-
-
-                // fieldsHtml += '</div>';
-                return '<div class="cf-form-row cf-form-row__' + field.type + '">' + rows + '</div>';
-
-            }).join('');            
-
-            html += '</div>';
-
-            return html;
-
-
+        rows = config.fields.map(function( field ) {
+            field = buildColumnField( field, data );
+            return field;
         }).join('');
 
-    // TODO:
-    // Assign single off var
-    // Assign repeeater vars
-    $('#output').on('click', function() {
-        var foobar = [];
-        var repeater = $('.cf-form-row__repeater');
-        var rows = repeater.length;
-
-        for (var i = 0; i < rows; i++) {
-            var row = $(repeater[i]);
-            var inputFields = row.find('.cf-form-input');
-            var columns = inputFields.length;
-
-            // console.log(inputFields.length);
-
-            var obj = {};
-
-            for (var x = 0; x < columns; x++) {
-                // console.log($(inputFields[x]).val());
-                var key = inputFields[x].name;
-                var val = inputFields[x].value;
-                obj[key] = val;
-
-
-            }
-
-            foobar.push(obj);
-        }
-
-        console.log(foobar);
-
-        //api.field.setValue(foobar);
+        html += '<div class="cf-form-row cf-form-row__' + config.type + '" data-ID="' + config.name + '">' + rows + '</div>';
 
     });
 
+    target.innerHTML = html;
+
+    // POPULATE
 
 
-    function buildField( field ) {
+    /**
+     * Parse the column element and find fields and extract values
+     * @param  {element} column
+     * @return {string|array}
+     */
+    function getColumnFieldValue( column ) {
+
+        // Set function vars
+        var columnFields,
+            value,
+            type;
+
+        // Find all fields within column
+        columnFields = $(column).find('.cf-form-input');
+
+        // Get type and name based on first input element
+        type = columnFields[0].type;
+
+        // Extract value based on field type
+        switch (type) {
+        
+            // Checkbox is unique because we must grab all inputs in this column to check for value
+            case 'checkbox':
+
+                // Get all selected checkboxes
+                var checked = [],
+                    selectedOptions = $(column).find(':checked');
+
+                // Add each checked option to data array
+                $.each( selectedOptions, function( key, value ) {
+                    checked.push($(this).val());
+                });
+
+                value = checked;
+                break;
+
+            default:
+                value = columnFields.val();
+        }
+
+        return value;
+    }
+
+
+    /**
+     * Build html column and input field based on json config
+     * @param  {array} field
+     * @param  {array} data
+     * @return {string}
+     */
+    function buildColumnField( field, data ) {
         if ( typeof field === 'undefined' ) return '';
 
-        var rows = '';
+        var rows = '',
+            guid = '_' + generateGuid(),
+            inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
 
         switch (field.type) {
             case 'text':
             case 'email':
             case 'number':
-                rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + '" value="' + field.value + '" placeholder="' + field.placeholder + '" >';
+                rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + inputValue + '" placeholder="' + field.placeholder + '" >';
                 break;
             case 'textarea':
-                rows += '<textarea class="cf-form-input" name="' + field.name + '" placeholder="' + field.placeholder + '" >' + field.value + '</textarea>';
+                rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + inputValue + '</textarea>';
                 break;
             case 'select':
                 var options = '';
                 field.options.forEach( function( option ) {
-                    var selected = field.value == option.value ? 'selected' : '' ;
+                    var selected = inputValue == option.value ? 'selected' : '' ;
                     options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
                 });
-                rows += '<select class="cf-form-input" name="' + field.name + '" ' + multiple + '>' + options + '</select>';
+                rows += '<select class="cf-form-input" name="' + field.name + guid + '">' + options + '</select>';
                 break;
             case 'multiselect':
                 var options = '';
                 field.options.forEach( function( option ) {
-                    var selected = field.value.includes( option.value ) ? 'selected' : '';
+                    var selected = inputValue.includes( option.value ) ? 'selected' : '';
                     options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
                 });
-                rows += '<select class="cf-form-input" name="' + field.name + '" multiple>' + options + '</select>';
+                rows += '<select class="cf-form-input" name="' + field.name + guid + '" multiple>' + options + '</select>';
                 break;
             case 'radio':
                 field.options.forEach( function( option ) {
-                    var checked = field.value == option.value ? 'checked' : '' ;
-                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + ' " value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                    var checked = inputValue == option.value ? 'checked' : '' ;
+                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
                 });
                 break;
             case 'checkbox':
                 field.options.forEach( function( option ) {
-                    var checked = field.value.includes( option.value ) ? 'checked' : '';
-                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + ' " value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                    var checked = inputValue.includes( option.value ) ? 'checked' : '';
+                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
                 });
                 break;
             case 'reference':
-                rows += '<h2>DEFAULT</h2>';
+                rows += '<h2>REF TODO</h2>';
                 break;
             default:
-                rows += '<h2>DEFAULT</h2>';
+                rows += '<p>Invalid</p>';
         }
 
-        return '<div class="cf-form-col cf-form-col__' + field.type + '">' + rows + '</div>';
+        return '<div class="cf-form-col cf-form-col__' + field.type + '" data-ID="' + field.name + '">' + rows + '</div>';
 
     }
 
-    function buildRepeater( field ) {
+    /**
+    function buildRepeater( field, UID ) {
         if ( typeof field === 'undefined' ) return '';
         var foobar = '';
         field.subfields.forEach( function( item ) {
-            foobar += buildField( item );
+            foobar += buildColumnField( item, UID );
         });
         return foobar;        
+    }**/
+
+
+    $(document).ready(function() {
+        $('select.cf-form-input').select2();
+    })
+
+    /**
+     * Generate unique identifier for form names
+     * @return {string}
+     */
+    function generateGuid() {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
+
+
+    /** CLEAN UP */
+    $('#add').on('click', function() {
+        console.log('1');
+        var target = document.querySelector('#repeater');
+
+        rows = config.fields.map(function( field ) {
+            field = buildColumnField( field );
+            return field;
+        }).join('');
+
+        target.innerHTML += '<div class="cf-form-row cf-form-row__' + config.type + '" data-ID="' + config.name + '">' + rows + '</div>';
+    });
+    
+    $('#generate').on('click', function() {
+
+            // Build basic vars
+            var fieldData = [];
+
+            // Get generate rows on repeater field
+            var repeaterRows = $('.cf-form-row__repeater');
+
+            // Loop through each row
+            for ( var i = 0; i < repeaterRows.length; i++ ) {
+
+                // Determine number of columns per row
+                var rowColumns = $(repeaterRows[i]).find('.cf-form-col');
+                var jsonObject = {};
+
+                // Loop through each column in the current row
+                for ( var x = 0; x < rowColumns.length; x++ ) {
+                    var column = rowColumns[x];
+                    var key = $(rowColumns[x]).attr('data-id');
+                    var val = getColumnFieldValue(column);
+                    jsonObject[key] = val;
+                }
+
+                fieldData.push(jsonObject);
+            }
+
+            console.log(fieldData);
+            // Set value for content update
+            // api.field.setValue(fieldData);
+
+        });
 
     </script>
 </body>
