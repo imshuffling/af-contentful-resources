@@ -1,7 +1,7 @@
 {
   "id": "default-field-value",
   "name": "Default value for a field",
-  "srcdoc": "extension.html",
+  "srcdoc": "index.html",
   "fieldTypes": ["Symbol"],
   "parameters": {
     "instance": [
