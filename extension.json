@@ -1,0 +1,28 @@
+{
+  "id": "cf-repeater",
+  "name": "Repeater",
+  "srcdoc": "index.html",
+  "fieldTypes": ["Object"],
+  "parameters": {
+    "instance": [
+      {
+        "id": "configUrl",
+        "type": "Symbol",
+        "name": "URL of config JSON for this repeater"
+      },
+      {
+        "id": "layout",
+        "type": "Enum",
+        "name": "Layout",
+        "options": [{"cf-form-layout__rows": "Single Rows"}, {"cf-form-layout__cols": "Columns"}],
+        "default": "cf-form-layout__rows",
+        "required": true
+      },
+      {
+        "id": "description",
+        "type": "Symbol",
+        "name": "Description"
+      },
+    ]
+  }
+}

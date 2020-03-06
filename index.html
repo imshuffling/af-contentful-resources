@@ -4,435 +4,373 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://contentful.github.io/ui-extensions-sdk/cf-extension.css">
-    <link rel="stylesheet" href="forms.css">
+    <link rel="stylesheet" href="https://contenful-sandbox.s3.amazonaws.com/forms.css">
     <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script src="https://thewallstreeteagle.com/test/config.json"></script>
 </head>
 
 <body>
     <div class="cf-form-wrap" id="repeater"></div>
-    <button class="cf-btn-primary" id="generate">Generate</button>
-    <button class="cf-btn-secondary" id="add">Add Row</button>
+    <button class="cf-btn-primary" id="add">Add Row</button>
 
     <script>
 
-        'use strict';
+        // When UI Extensions SDK is loaded the callback will be executed
+        window.contentfulExtension.init( initExtension );
 
-        // When UI Extensions SDK is loaded the callback will be executed.
-        // window.contentfulExtension.init(initExtension);
-        window.onload = initExtension();
+        /**
+         * Initilize SDK and setup methods
+         * @param  {object} api
+         * @return null
+         */
+        function initExtension( api ) {
 
-        // window.contentfulExtension.init(function(api) {
-        function initExtension (api) {
+            // Set instance vars
+            var configUrl = api.parameters.instance.configUrl,
+                layout = api.parameters.instance.layout,
+                description = api.parameters.instance.description,
+                config;
 
-            var currentData = [
-                {
-                    "action": [
-                        "buy",
-                        "sell"
-                    ],
-                    "barfoo": "Howdy",
-                    "checky": [
-                        "grobi",
-                        "urk"
-                    ],
-                    "radiohead": "elgi"
-                },
-                {
-                    "action": [
-                        "buy",
-                    ],
-                    "barfoo": "XX",
-                    "checky": [
-                        "urk",
-                        "ulfgi"
-                    ],
-                    "radiohead": "dawi"
-                }
-            ];
+            configUrl = 'https://contenful-sandbox.s3.amazonaws.com/config.json';
+            layout = 'cf-form-layout__rows';
+            description = 'Do the thing.';
 
-            // currentData = [{}];
+            // Call to external json config to build this repeater
+            $.getJSON( configUrl, function() {} )
+                
+                // When done, load config and build rows
+                .done(function(json) {
+                    config = json;
+                    initBuild();
+                })
 
-            // For dev
-            if ( typeof api !== 'undefined' ) {
+                // Throw alert if config doesn't load
+                .fail(function() {
+                    api.dialogs
+                        .openAlert({
+                            title: 'JSON Config Error',
+                            message: 'There was an error loading the JSON config. Please check the URL in the content model setup and try again.',
+                            confirmLabel: 'Close'
+                        })
+                        .then( result => {});
+                });
 
-                console.log( 'Using SDK' );
+
+            // User actions with callbacks
+            $( '#add' ).on( 'click', addRow );
+            $( '#repeater' ).on( 'click', '.cf-btn-remove', removeRow );        
+
+            function initBuild() {
+
+                // Append layout class
+                $( '#repeater' ).addClass(layout);
 
                 // Automatically adjust UI Extension size in the Web App
                 api.window.startAutoResizer();
 
-                // var inputEl = document.querySelector('.cf-form-input');
-                var field = api.field;
+                // Check for existing values
+                var currentData = api.field.getValue();
 
-                // Callback for changes of the field value.
-                var detachValueChangeHandler = field.onValueChanged( valueChangeHandler );
+                // Set vars
+                    var target = document.querySelector('#repeater');
+                    var row = '';
+                    var html = '';
 
-                // Handler for external field value changes (e.g. when multiple authors are working on the same entry).
-                function valueChangeHandler( value ) {
-                    inputEl.value = JSON.stringify(value) || '';
-                    //
+                // Generate rows for all current data
+                if ( typeof description !== 'undefined' ) {
+                    html =+ '<div class="cf-form-description">' + description + '</div>';
                 }
+               
+                // Generate rows for all current data
+                if ( typeof currentData !== 'undefined' || currentData !== [] ) {
 
-                // Assign current data for initial field build
-                var currentData = api.field.getValue() ? api.field.getValue() : [{}] ;
+                    // Build rows
+                    currentData.forEach(function( data, index, array ){
+                        row = config.fields.map(function( item ) {
+                            field = buildColumnField( item, data );
+                            return field;
+                        }).join('');
+                        html += buildRow( row );
+                    });
+                    target.innerHTML += html;
 
+                    // Initilize select2 and sortable
+                    $('select.cf-form-input').select2();
+                    $( "#repeater" ).sortable();
+
+                    // Initialize listeners for generated fields
+                    addFieldListeners();
+                    addSelect2Listeners();
+
+                }
             }
 
-            // Build HTML for repeater
-            var target = document.querySelector('#repeater');
-            var rows = '';
-            var html = '';
-
-            // If no current data, build as empty array for single row
-            var data = currentData ? currentData : [{}] ;
-
-            currentData.forEach(function( data, index, array ){
-                rows = config.fields.map(function( item ) {
-                    field = buildColumnField( item, data );
-                    return field;
-                }).join('');
-                html += buildRow( rows );
-            });
-
-            target.innerHTML = html;
-
-
-            // Select2/sortable init
-            // $( function() {
-                $('select.cf-form-input').select2();
-                $( "#repeater" ).sortable();
-                // $( "#repeater" ).disableSelection();
-            // });
-
-
-
-
-
-            /// Change handler
-            // var inputEl = document.querySelector('.cf-form-input');
-            // console.log(inputEl);
-
-            function addListeners() {
-                document.querySelectorAll('.cf-form-input').forEach(item => {
-                    item.addEventListener('input', keyboardInputHandler);
-                })
-            }
-
-            function addListenersSelect2() {
-                $('select.cf-form-input').on('change', function() {
-                    keyboardInputHandler(this);
+            /**
+             * Set listeners for all generic input fields
+             * @return null
+             */
+            function addFieldListeners() {
+                document.querySelectorAll( '.cf-form-input' ).forEach( item => {
+                    item.addEventListener( 'input', inputUpdateHandler );
                 });
             }
 
-            addListeners();
-            addListenersSelect2();
+            /**
+             * Since select2 is a jQuery plugin, watch for changes on these fields
+             * @return null
+             */
+            function addSelect2Listeners() {
+                $( 'select.cf-form-input' ).on( 'change', function() {
+                    inputUpdateHandler();
+                });
+            }
 
-            // console.log($('select.cf-form-input'));
-
-            
-            // Callback for changes of the field value. **SET ABOVE**
-            //var detachValueChangeHandler = field.onValueChanged(valueChangeHandler);
-
-            // Handle keyboard input.
-            // inputEl.addEventListener( 'input', keyboardInputHandler );
-            // Handle DOM "onbeforeunload" event.
-            window.addEventListener( 'onbeforeunload', unloadHandler) ;
-
-            // Event handler for keyboard input.
-            function keyboardInputHandler(element) {
-
-                // If from event or from select change
-                // if ( element.type === 'input' ) {
-                //     console.log($(this).val());
-                // } else {
-                //     console.log($(element).val());
-                // }
-
+            /**
+             * Callback to field updates to generate data for updating CF
+             * @return null
+             */
+            function inputUpdateHandler() {
                 debounce( generateData(), 250 );
-
-                // console.log(this)
-                // console.log(element)
-                // console.log(element.type)
-                // console.log(element.data)
-                // console.log(element.dataTransfer)
-                // console.log(element.inputType)
-                // console.log($(element))
-                // console.log('hey, you changed something');
-                // var value = inputEl.value;
-                // if (typeof value !== 'string' || value === '') {
-                //     field.removeValue();
-                // } else {
-                //     field.setValue(value);
-                // }
             }
 
-            // Event handler for window unload.
-            function unloadHandler() {
-                window.removeEventListener('onbeforeunload', unloadHandler);
-                inputEl.removeEventListener('input', keyboardInputHandler);
-                detachValueChangeHandler();
-            }
+            /**
+             * Parse the column element and find fields and extract values
+             * @param  {element} column
+             * @return {string|array}
+             */
+            function getColumnFieldValue( column ) {
 
+                // Set function vars
+                var columnFields,
+                    value,
+                    type;
 
+                // Find all fields within column
+                columnFields = $(column).find('.cf-form-input');
 
+                // Get type and name based on first input element
+                type = columnFields[0].type;
 
+                // Extract value based on field type
+                switch (type) {
+                
+                    // Checkbox is unique because we must grab all inputs in this column to check for value
+                    case 'checkbox':
 
+                        // Get all selected checkboxes
+                        var checked = [],
+                            selectedOptions = $(column).find(':checked');
 
+                        // Add each checked option to data array
+                        $.each( selectedOptions, function( key, value ) {
+                            checked.push($(this).val());
+                        });
 
+                        value = checked;
+                        break;
 
+                    // Only grab the selected radio box
+                    case 'radio':
+                        value = $(column).find(':checked').val();
+                        break;
 
-        /**
-         * Parse the column element and find fields and extract values
-         * @param  {element} column
-         * @return {string|array}
-         */
-        function getColumnFieldValue( column ) {
-
-            // Set function vars
-            var columnFields,
-                value,
-                type;
-
-            // Find all fields within column
-            columnFields = $(column).find('.cf-form-input');
-
-            // Get type and name based on first input element
-            type = columnFields[0].type;
-
-            // Extract value based on field type
-            switch (type) {
-            
-                // Checkbox is unique because we must grab all inputs in this column to check for value
-                case 'checkbox':
-
-                    // Get all selected checkboxes
-                    var checked = [],
-                        selectedOptions = $(column).find(':checked');
-
-                    // Add each checked option to data array
-                    $.each( selectedOptions, function( key, value ) {
-                        checked.push($(this).val());
-                    });
-
-                    value = checked;
-                    break;
-
-                // Only grab the selected radio box
-                case 'radio':
-                    value = $(column).find(':checked').val();
-                    break;
-
-                default:
-                    value = columnFields.val();
-            }
-
-            return value;
-        }
-
-
-        /**
-         * Build html column and input field based on json config
-         * @param  {array} field
-         * @param  {array} data
-         * @return {string}
-         */
-        function buildColumnField( field, data ) {
-            if ( typeof field === 'undefined' ) return '';
-
-            var rows = '',
-                guid = '_' + generateGuid(),
-                inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
-
-                // Add label
-                rows += '<label>' + field.label + '</label>';
-
-            switch (field.type) {
-                case 'text':
-                case 'email':
-                case 'number':
-                    rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + inputValue + '" placeholder="' + field.placeholder + '" >';
-                    break;
-                case 'textarea':
-                    rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + inputValue + '</textarea>';
-                    break;
-                case 'select':
-                    var options = '';
-                    field.options.forEach( function( option ) {
-                        var selected = inputValue == option.value ? 'selected' : '' ;
-                        options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
-                    });
-                    rows += '<select class="cf-form-input" name="' + field.name + guid + '">' + options + '</select>';
-                    break;
-                case 'multiselect':
-                    var options = '';
-                    field.options.forEach( function( option ) {
-                        var selected = inputValue.includes( option.value ) ? 'selected' : '';
-                        options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
-                    });
-                    rows += '<select class="cf-form-input" name="' + field.name + guid + '" multiple>' + options + '</select>';
-                    break;
-                case 'radio':
-                    field.options.forEach( function( option ) {
-                        var checked = inputValue == option.value ? 'checked' : '' ;
-                        rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
-                    });
-                    break;
-                case 'checkbox':
-                    field.options.forEach( function( option ) {
-                        var checked = inputValue.includes( option.value ) ? 'checked' : '';
-                        rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
-                    });
-                    break;
-                case 'reference':
-                    rows += '<h2>REF TODO</h2>';
-                    break;
-                default:
-                    rows += '<p>Invalid</p>';
-            }
-
-            return '<div class="cf-form-col cf-form-col__' + field.type + '" input-id="' + field.name + '">' + rows + '</div>';
-
-        }
-
-        /**
-         * Generate a temporary, unique identifier for form names
-         * @return {string}
-         */
-        function generateGuid() {
-            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        }
-
-        /**
-         * Build html string for row of fields
-         * @param  {string} rows
-         * @return {string}
-         */
-        function buildRow( rows ) {
-            var guid = generateGuid();
-            return '<div class="cf-form-row cf-form-row__repeater" data-id="' + guid + '">' + rows + '<button class="cf-btn-secondary cf-btn-remove" for="' + guid + '">Remove</button></div>';
-        }
-
-
-
-        /**
-         * Actions
-         */
-        $( '#add' ).on( 'click', addRow );
-        $('#repeater').on('click', '.cf-btn-remove', removeRow);
-
-        /**
-         * Generate a row of input fields
-         */
-        function addRow() {
-            var target = document.querySelector('#repeater');
-            // var target = $('#repeater');
-
-            var newRow = config.fields.map(function( item ) {
-                field = buildColumnField( item );
-                return field;
-            }).join('');
-
-            // stop select
-            $('select.cf-form-input').select2('destroy');
-            target.insertAdjacentHTML('beforeend', buildRow( newRow ) );
-
-            // target.append(buildRow( newRow ));
-            // Re-enable
-            $('select.cf-form-input').select2();
-
-            addListeners();
-            addListenersSelect2();
-
-        }       
-
-        /**
-         * Remove target row of input fields
-         */
-        function removeRow() {
-
-            $(this).parent().remove();
-
-            api.dialogs
-                .openConfirm({
-                    title: "Delete Row",
-                    message: "Are you sure you want to remove this row?",
-                    intent: "positive",
-                    confirmLabel: "Yes, remove it",
-                    cancelLabel: "Cancel"
-                })
-                .then( result => {
-                    if ( result === true ) {
-                        $(this).parent().remove();
-                    }
-                })
-        
-            // var r = confirm("Are you sure?");
-            // if (r == true) {
-            //   $(this).parent().remove();
-            // } 
-
-            //TODO: UPDATE SET VALUE
-
-        }
-        // });
-
-        function generateData() {
-
-            // Build basic vars
-            var fieldData = [];
-
-            // Get generate rows on repeater field
-            var repeaterRows = $('.cf-form-row__repeater');
-
-            // Loop through each row
-            for ( var i = 0; i < repeaterRows.length; i++ ) {
-
-                // Determine number of columns per row
-                var rowColumns = $(repeaterRows[i]).find('.cf-form-col');
-                var jsonObject = {};
-
-                // Loop through each column in the current row
-                for ( var x = 0; x < rowColumns.length; x++ ) {
-                    var column = rowColumns[x];
-                    var key = $(rowColumns[x]).attr('input-id');
-                    var val = getColumnFieldValue(column);
-                    jsonObject[key] = val;
+                    default:
+                        value = columnFields.val();
                 }
 
-                fieldData.push(jsonObject);
+                return value;
             }
 
-            // Set value for content update
-            console.log(fieldData);
-            // api.field.setValue(fieldData);
-        }
 
-        $('#generate').on('click', function() {
+            /**
+             * Build html column and input field based on json config
+             * @param  {array} field
+             * @param  {array} data
+             * @return {string}
+             */
+            function buildColumnField( field, data ) {
+                if ( typeof field === 'undefined' ) return '';
 
-            generateData();
+                var rows = '',
+                    guid = '_' + generateGuid(),
+                    inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
 
-        });
+                    // Add label and instructions
+                    rows += ( typeof field.label !== 'undefined' ) ? '<label class="cf-form-input__label">' + field.label + '</label>' : '' ;
+                    rows += ( typeof field.instruction !== 'undefined' ) ? '<span class="cf-form-input__instructions">' + field.instruction + '</span>' : '' ;
 
-        // http://davidwalsh.name/javascript-debounce-function
-        function debounce(func, wait) {
-            var timeout;
-            return function () {
-                var context = this, args = arguments;
-                var later = function () {
-                    timeout = null;
-                    func.apply(context, args);
+                switch (field.type) {
+                    case 'text':
+                    case 'email':
+                    case 'number':
+                        rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + inputValue + '" placeholder="' + field.placeholder + '" >';
+                        break;
+                    case 'textarea':
+                        rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + inputValue + '</textarea>';
+                        break;
+                    case 'select':
+                        var options = '';
+                        field.options.forEach( function( option ) {
+                            var selected = inputValue == option.value ? 'selected' : '' ;
+                            options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                        });
+                        rows += '<select class="cf-form-input" name="' + field.name + guid + '">' + options + '</select>';
+                        break;
+                    case 'multiselect':
+                        var options = '';
+                        field.options.forEach( function( option ) {
+                            var selected = inputValue.includes( option.value ) ? 'selected' : '';
+                            options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                        });
+                        rows += '<select class="cf-form-input" name="' + field.name + guid + '" multiple>' + options + '</select>';
+                        break;
+                    case 'radio':
+                        field.options.forEach( function( option ) {
+                            var checked = inputValue == option.value ? 'checked' : '' ;
+                            rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                        });
+                        break;
+                    case 'checkbox':
+                        field.options.forEach( function( option ) {
+                            var checked = inputValue.includes( option.value ) ? 'checked' : '';
+                            rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                        });
+                        break;
+                    case 'reference':
+                        rows += '<p>REF TODO</p>';
+                        break;
+                    default:
+                        rows += '<p>Invalid</p>';
+                }
+
+                return '<div class="cf-form-col cf-form-col__' + field.type + '" input-id="' + field.name + '" style="width:' + field.width + '">' + rows + '</div>';
+
+            }
+
+            /**
+             * Generate a temporary, unique identifier for form names
+             * @return {string}
+             */
+            function generateGuid() {
+                return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            }
+
+            /**
+             * Build html string for row of fields
+             * @param  {string} rows
+             * @return {string}
+             */
+            function buildRow( row ) {
+                var guid = generateGuid();
+                return '<div class="cf-form-row cf-form-row__repeater" data-id="' + guid + '">' + row + '<button class="cf-btn-secondary cf-btn-remove" for="' + guid + '">Remove</button></div>';
+            }
+
+            /**
+             * Generate a row of input fields
+             */
+            function addRow() {
+
+                // Build field from config
+                var target = document.querySelector('#repeater');
+                var newRow = config.fields.map(function( item ) {
+                    field = buildColumnField( item );
+                    return field;
+                }).join('');
+
+                // Destroy select2 and reinit after data append
+                $('select.cf-form-input').select2('destroy');
+                target.insertAdjacentHTML('beforeend', buildRow( newRow ) );
+                $('select.cf-form-input').select2();
+
+                // Re-init listeners
+                addFieldListeners();
+                addSelect2Listeners();
+
+            }       
+
+            /**
+             * Remove target row of input fields and update
+             */
+            function removeRow() {
+
+                // Confirm via SDK
+                api.dialogs
+                    .openConfirm({
+                        title: 'Delete Row',
+                        message: 'Are you sure you want to remove this row?',
+                        intent: 'positive',
+                        confirmLabel: 'Yes, remove it',
+                        cancelLabel: 'Cancel'
+                    })
+                    .then( result => {
+                        if ( result === true ) {
+
+                            // Remove and update
+                            $( this ).parent().remove();
+                            debounce( generateData(), 250 );
+
+                        }
+                    })
+
+            }
+
+            /**
+             * Generate field data and set value
+             */
+            function generateData() {
+
+                // Build basic vars
+                var fieldData = [];
+
+                // Get generate rows on repeater field
+                var repeaterRows = $('.cf-form-row__repeater');
+
+                // Loop through each row to build json array
+                for ( var i = 0; i < repeaterRows.length; i++ ) {
+
+                    // Determine number of columns per row
+                    var rowColumns = $(repeaterRows[i]).find('.cf-form-col');
+                    var jsonObject = {};
+
+                    // Loop through each column in the current row
+                    for ( var x = 0; x < rowColumns.length; x++ ) {
+                        var column = rowColumns[x];
+                        var key = $(rowColumns[x]).attr('input-id');
+                        var val = getColumnFieldValue(column);
+                        jsonObject[key] = val;
+                    }
+                    fieldData.push(jsonObject);
+
+                }
+
+                // Set value for content update
+                console.log(fieldData);
+                api.field.setValue(fieldData);
+            }
+
+            /**
+             * Generic debouce: http://davidwalsh.name/javascript-debounce-function
+             * @param  {function} func
+             * @param  {integer} wait
+             */
+            function debounce( func, wait ) {
+                var timeout;
+                return function() {
+                    var context = this, args = arguments;
+                    var later = function () {
+                        timeout = null;
+                        func.apply(context, args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                    if (!timeout) func.apply(context, args);
                 };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-                if (!timeout) func.apply(context, args);
-            };
-        }
+            }
 
-    } // End INIT
+        } 
 
     </script>
 </body>
