@@ -116,6 +116,7 @@ input[type='search'] {
 [type='file'],
 [type='checkbox'],
 [type='radio'] {
+  width: auto;
   margin: 0 0 1rem
 }
 

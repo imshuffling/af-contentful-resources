@@ -9,220 +9,378 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
-    <script src="config.json"></script>
-    <script src="existing.json"></script>
-    <script>
-
-    'use strict';
-    window.contentfulExtension.init(function(api) {
-        
-
-        // Automatically adjust UI Extension size in the Web App
-        api.window.startAutoResizer();
-
-        // console.log(api);
-
-        // var inputEl = document.querySelector('.cf-form-input');
-        var field = api.field;
-
-        console.log('field:');
-        console.log(field);
-
-
-        // Callback for changes of the field value.
-        // var detachValueChangeHandler = field.onValueChanged(valueChangeHandler);
-
-        // Handler for external field value changes (e.g. when multiple authors are working on the same entry).
-        function valueChangeHandler(value) {
-            // console.log(value);
-            // console.log('stop');
-            inputEl.value = JSON.stringify(value) || '';
-            // console.log('go');
-        }
-
-    });
-
-
-    </script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://thewallstreeteagle.com/test/config.json"></script>
 </head>
 
 <body>
     <div class="cf-form-wrap" id="repeater"></div>
     <button class="cf-btn-primary" id="generate">Generate</button>
     <button class="cf-btn-secondary" id="add">Add Row</button>
+
     <script>
 
-    // TODO: make this init function
-    // Build HTML for repeater
+        'use strict';
 
-    var target = document.querySelector('#repeater');
-    var rows = '';
-    var html = '';
-    var existing = existing ? existing : [{}] ;
-    // Get old data
+        // When UI Extensions SDK is loaded the callback will be executed.
+        // window.contentfulExtension.init(initExtension);
+        window.onload = initExtension();
 
-    existing.forEach(function( data, index, array ){
-        // console.log(foobar);
-        // console.log(index);
-        // console.log(array);
+        // window.contentfulExtension.init(function(api) {
+        function initExtension (api) {
 
-        rows = config.fields.map(function( field ) {
-            field = buildColumnField( field, data );
-            return field;
-        }).join('');
+            var currentData = [
+                {
+                    "action": [
+                        "buy",
+                        "sell"
+                    ],
+                    "barfoo": "Howdy",
+                    "checky": [
+                        "grobi",
+                        "urk"
+                    ],
+                    "radiohead": "elgi"
+                },
+                {
+                    "action": [
+                        "buy",
+                    ],
+                    "barfoo": "XX",
+                    "checky": [
+                        "urk",
+                        "ulfgi"
+                    ],
+                    "radiohead": "dawi"
+                }
+            ];
 
-        html += '<div class="cf-form-row cf-form-row__' + config.type + '" data-ID="' + config.name + '">' + rows + '</div>';
+            // currentData = [{}];
 
-    });
+            // For dev
+            if ( typeof api !== 'undefined' ) {
 
-    target.innerHTML = html;
+                console.log( 'Using SDK' );
 
-    // POPULATE
+                // Automatically adjust UI Extension size in the Web App
+                api.window.startAutoResizer();
+
+                // var inputEl = document.querySelector('.cf-form-input');
+                var field = api.field;
+
+                // Callback for changes of the field value.
+                var detachValueChangeHandler = field.onValueChanged( valueChangeHandler );
+
+                // Handler for external field value changes (e.g. when multiple authors are working on the same entry).
+                function valueChangeHandler( value ) {
+                    inputEl.value = JSON.stringify(value) || '';
+                    //
+                }
+
+                // Assign current data for initial field build
+                var currentData = api.field.getValue() ? api.field.getValue() : [{}] ;
+
+            }
+
+            // Build HTML for repeater
+            var target = document.querySelector('#repeater');
+            var rows = '';
+            var html = '';
+
+            // If no current data, build as empty array for single row
+            var data = currentData ? currentData : [{}] ;
+
+            currentData.forEach(function( data, index, array ){
+                rows = config.fields.map(function( item ) {
+                    field = buildColumnField( item, data );
+                    return field;
+                }).join('');
+                html += buildRow( rows );
+            });
+
+            target.innerHTML = html;
 
 
-    /**
-     * Parse the column element and find fields and extract values
-     * @param  {element} column
-     * @return {string|array}
-     */
-    function getColumnFieldValue( column ) {
+            // Select2/sortable init
+            // $( function() {
+                $('select.cf-form-input').select2();
+                $( "#repeater" ).sortable();
+                // $( "#repeater" ).disableSelection();
+            // });
 
-        // Set function vars
-        var columnFields,
-            value,
-            type;
 
-        // Find all fields within column
-        columnFields = $(column).find('.cf-form-input');
 
-        // Get type and name based on first input element
-        type = columnFields[0].type;
 
-        // Extract value based on field type
-        switch (type) {
+
+            /// Change handler
+            // var inputEl = document.querySelector('.cf-form-input');
+            // console.log(inputEl);
+
+            function addListeners() {
+                document.querySelectorAll('.cf-form-input').forEach(item => {
+                    item.addEventListener('input', keyboardInputHandler);
+                })
+            }
+
+            function addListenersSelect2() {
+                $('select.cf-form-input').on('change', function() {
+                    keyboardInputHandler(this);
+                });
+            }
+
+            addListeners();
+            addListenersSelect2();
+
+            // console.log($('select.cf-form-input'));
+
+            
+            // Callback for changes of the field value. **SET ABOVE**
+            //var detachValueChangeHandler = field.onValueChanged(valueChangeHandler);
+
+            // Handle keyboard input.
+            // inputEl.addEventListener( 'input', keyboardInputHandler );
+            // Handle DOM "onbeforeunload" event.
+            window.addEventListener( 'onbeforeunload', unloadHandler) ;
+
+            // Event handler for keyboard input.
+            function keyboardInputHandler(element) {
+
+                // If from event or from select change
+                // if ( element.type === 'input' ) {
+                //     console.log($(this).val());
+                // } else {
+                //     console.log($(element).val());
+                // }
+
+                debounce( generateData(), 250 );
+
+                // console.log(this)
+                // console.log(element)
+                // console.log(element.type)
+                // console.log(element.data)
+                // console.log(element.dataTransfer)
+                // console.log(element.inputType)
+                // console.log($(element))
+                // console.log('hey, you changed something');
+                // var value = inputEl.value;
+                // if (typeof value !== 'string' || value === '') {
+                //     field.removeValue();
+                // } else {
+                //     field.setValue(value);
+                // }
+            }
+
+            // Event handler for window unload.
+            function unloadHandler() {
+                window.removeEventListener('onbeforeunload', unloadHandler);
+                inputEl.removeEventListener('input', keyboardInputHandler);
+                detachValueChangeHandler();
+            }
+
+
+
+
+
+
+
+
+
+        /**
+         * Parse the column element and find fields and extract values
+         * @param  {element} column
+         * @return {string|array}
+         */
+        function getColumnFieldValue( column ) {
+
+            // Set function vars
+            var columnFields,
+                value,
+                type;
+
+            // Find all fields within column
+            columnFields = $(column).find('.cf-form-input');
+
+            // Get type and name based on first input element
+            type = columnFields[0].type;
+
+            // Extract value based on field type
+            switch (type) {
+            
+                // Checkbox is unique because we must grab all inputs in this column to check for value
+                case 'checkbox':
+
+                    // Get all selected checkboxes
+                    var checked = [],
+                        selectedOptions = $(column).find(':checked');
+
+                    // Add each checked option to data array
+                    $.each( selectedOptions, function( key, value ) {
+                        checked.push($(this).val());
+                    });
+
+                    value = checked;
+                    break;
+
+                // Only grab the selected radio box
+                case 'radio':
+                    value = $(column).find(':checked').val();
+                    break;
+
+                default:
+                    value = columnFields.val();
+            }
+
+            return value;
+        }
+
+
+        /**
+         * Build html column and input field based on json config
+         * @param  {array} field
+         * @param  {array} data
+         * @return {string}
+         */
+        function buildColumnField( field, data ) {
+            if ( typeof field === 'undefined' ) return '';
+
+            var rows = '',
+                guid = '_' + generateGuid(),
+                inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
+
+                // Add label
+                rows += '<label>' + field.label + '</label>';
+
+            switch (field.type) {
+                case 'text':
+                case 'email':
+                case 'number':
+                    rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + inputValue + '" placeholder="' + field.placeholder + '" >';
+                    break;
+                case 'textarea':
+                    rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + inputValue + '</textarea>';
+                    break;
+                case 'select':
+                    var options = '';
+                    field.options.forEach( function( option ) {
+                        var selected = inputValue == option.value ? 'selected' : '' ;
+                        options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                    });
+                    rows += '<select class="cf-form-input" name="' + field.name + guid + '">' + options + '</select>';
+                    break;
+                case 'multiselect':
+                    var options = '';
+                    field.options.forEach( function( option ) {
+                        var selected = inputValue.includes( option.value ) ? 'selected' : '';
+                        options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                    });
+                    rows += '<select class="cf-form-input" name="' + field.name + guid + '" multiple>' + options + '</select>';
+                    break;
+                case 'radio':
+                    field.options.forEach( function( option ) {
+                        var checked = inputValue == option.value ? 'checked' : '' ;
+                        rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                    });
+                    break;
+                case 'checkbox':
+                    field.options.forEach( function( option ) {
+                        var checked = inputValue.includes( option.value ) ? 'checked' : '';
+                        rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
+                    });
+                    break;
+                case 'reference':
+                    rows += '<h2>REF TODO</h2>';
+                    break;
+                default:
+                    rows += '<p>Invalid</p>';
+            }
+
+            return '<div class="cf-form-col cf-form-col__' + field.type + '" input-id="' + field.name + '">' + rows + '</div>';
+
+        }
+
+        /**
+         * Generate a temporary, unique identifier for form names
+         * @return {string}
+         */
+        function generateGuid() {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
+
+        /**
+         * Build html string for row of fields
+         * @param  {string} rows
+         * @return {string}
+         */
+        function buildRow( rows ) {
+            var guid = generateGuid();
+            return '<div class="cf-form-row cf-form-row__repeater" data-id="' + guid + '">' + rows + '<button class="cf-btn-secondary cf-btn-remove" for="' + guid + '">Remove</button></div>';
+        }
+
+
+
+        /**
+         * Actions
+         */
+        $( '#add' ).on( 'click', addRow );
+        $('#repeater').on('click', '.cf-btn-remove', removeRow);
+
+        /**
+         * Generate a row of input fields
+         */
+        function addRow() {
+            var target = document.querySelector('#repeater');
+            // var target = $('#repeater');
+
+            var newRow = config.fields.map(function( item ) {
+                field = buildColumnField( item );
+                return field;
+            }).join('');
+
+            // stop select
+            $('select.cf-form-input').select2('destroy');
+            target.insertAdjacentHTML('beforeend', buildRow( newRow ) );
+
+            // target.append(buildRow( newRow ));
+            // Re-enable
+            $('select.cf-form-input').select2();
+
+            addListeners();
+            addListenersSelect2();
+
+        }       
+
+        /**
+         * Remove target row of input fields
+         */
+        function removeRow() {
+
+            $(this).parent().remove();
+
+            api.dialogs
+                .openConfirm({
+                    title: "Delete Row",
+                    message: "Are you sure you want to remove this row?",
+                    intent: "positive",
+                    confirmLabel: "Yes, remove it",
+                    cancelLabel: "Cancel"
+                })
+                .then( result => {
+                    if ( result === true ) {
+                        $(this).parent().remove();
+                    }
+                })
         
-            // Checkbox is unique because we must grab all inputs in this column to check for value
-            case 'checkbox':
+            // var r = confirm("Are you sure?");
+            // if (r == true) {
+            //   $(this).parent().remove();
+            // } 
 
-                // Get all selected checkboxes
-                var checked = [],
-                    selectedOptions = $(column).find(':checked');
+            //TODO: UPDATE SET VALUE
 
-                // Add each checked option to data array
-                $.each( selectedOptions, function( key, value ) {
-                    checked.push($(this).val());
-                });
-
-                value = checked;
-                break;
-
-            default:
-                value = columnFields.val();
         }
+        // });
 
-        return value;
-    }
-
-
-    /**
-     * Build html column and input field based on json config
-     * @param  {array} field
-     * @param  {array} data
-     * @return {string}
-     */
-    function buildColumnField( field, data ) {
-        if ( typeof field === 'undefined' ) return '';
-
-        var rows = '',
-            guid = '_' + generateGuid(),
-            inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
-
-        switch (field.type) {
-            case 'text':
-            case 'email':
-            case 'number':
-                rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + inputValue + '" placeholder="' + field.placeholder + '" >';
-                break;
-            case 'textarea':
-                rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + inputValue + '</textarea>';
-                break;
-            case 'select':
-                var options = '';
-                field.options.forEach( function( option ) {
-                    var selected = inputValue == option.value ? 'selected' : '' ;
-                    options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
-                });
-                rows += '<select class="cf-form-input" name="' + field.name + guid + '">' + options + '</select>';
-                break;
-            case 'multiselect':
-                var options = '';
-                field.options.forEach( function( option ) {
-                    var selected = inputValue.includes( option.value ) ? 'selected' : '';
-                    options += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
-                });
-                rows += '<select class="cf-form-input" name="' + field.name + guid + '" multiple>' + options + '</select>';
-                break;
-            case 'radio':
-                field.options.forEach( function( option ) {
-                    var checked = inputValue == option.value ? 'checked' : '' ;
-                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
-                });
-                break;
-            case 'checkbox':
-                field.options.forEach( function( option ) {
-                    var checked = inputValue.includes( option.value ) ? 'checked' : '';
-                    rows += '<label><input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + option.value + '" ' + checked + '>' + option.label + '</label>';
-                });
-                break;
-            case 'reference':
-                rows += '<h2>REF TODO</h2>';
-                break;
-            default:
-                rows += '<p>Invalid</p>';
-        }
-
-        return '<div class="cf-form-col cf-form-col__' + field.type + '" data-ID="' + field.name + '">' + rows + '</div>';
-
-    }
-
-    /**
-    function buildRepeater( field, UID ) {
-        if ( typeof field === 'undefined' ) return '';
-        var foobar = '';
-        field.subfields.forEach( function( item ) {
-            foobar += buildColumnField( item, UID );
-        });
-        return foobar;        
-    }**/
-
-
-    $(document).ready(function() {
-        $('select.cf-form-input').select2();
-    })
-
-    /**
-     * Generate unique identifier for form names
-     * @return {string}
-     */
-    function generateGuid() {
-        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    }
-
-
-    /** CLEAN UP */
-    $('#add').on('click', function() {
-        console.log('1');
-        var target = document.querySelector('#repeater');
-
-        rows = config.fields.map(function( field ) {
-            field = buildColumnField( field );
-            return field;
-        }).join('');
-
-        target.innerHTML += '<div class="cf-form-row cf-form-row__' + config.type + '" data-ID="' + config.name + '">' + rows + '</div>';
-    });
-    
-    $('#generate').on('click', function() {
+        function generateData() {
 
             // Build basic vars
             var fieldData = [];
@@ -240,7 +398,7 @@
                 // Loop through each column in the current row
                 for ( var x = 0; x < rowColumns.length; x++ ) {
                     var column = rowColumns[x];
-                    var key = $(rowColumns[x]).attr('data-id');
+                    var key = $(rowColumns[x]).attr('input-id');
                     var val = getColumnFieldValue(column);
                     jsonObject[key] = val;
                 }
@@ -248,11 +406,33 @@
                 fieldData.push(jsonObject);
             }
 
-            console.log(fieldData);
             // Set value for content update
+            console.log(fieldData);
             // api.field.setValue(fieldData);
+        }
+
+        $('#generate').on('click', function() {
+
+            generateData();
 
         });
+
+        // http://davidwalsh.name/javascript-debounce-function
+        function debounce(func, wait) {
+            var timeout;
+            return function () {
+                var context = this, args = arguments;
+                var later = function () {
+                    timeout = null;
+                    func.apply(context, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (!timeout) func.apply(context, args);
+            };
+        }
+
+    } // End INIT
 
     </script>
 </body>
