@@ -1,18 +1,27 @@
 {
-  "id": "default-field-value",
-  "name": "Default value for a field",
+  "id": "cf-repeater",
+  "name": "Repeater",
   "srcdoc": "index.html",
-  "fieldTypes": ["Symbol"],
+  "fieldTypes": ["Object"],
   "parameters": {
     "instance": [
       {
-        "id": "defaultColor",
-        "name": "Default color",
-        "description": "Set which color is the default color",
+        "id": "configUrl",
+        "type": "Symbol",
+        "name": "URL of config JSON for this repeater"
+      },
+      {
+        "id": "layout",
         "type": "Enum",
-        "options": [{"#0000FF": "blue"}, {"#FFFF00": "yellow"}, {"#FF0000": "red"}],
-        "labels": {"empty": "Choose a color"},
+        "name": "Layout",
+        "options": [{"cf-form-layout__rows": "Single Rows"}, {"cf-form-layout__cols": "Columns"}],
+        "default": "cf-form-layout__rows",
         "required": true
+      },
+      {
+        "id": "description",
+        "type": "Symbol",
+        "name": "Description"
       }
     ]
   }
