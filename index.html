@@ -34,10 +34,6 @@
                 description = api.parameters.instance.description,
                 config;
 
-            configUrl = 'https://contenful-sandbox.s3.amazonaws.com/config.json';
-            layout = 'cf-form-layout__rows';
-            description = 'Do the thing.';
-
             // Call to external json config to build this repeater
             $.getJSON( configUrl, function() {} )
                 
@@ -81,7 +77,7 @@
 
                 // Generate rows for all current data
                 if ( typeof description !== 'undefined' ) {
-                    html =+ '<div class="cf-form-description">' + description + '</div>';
+                    html += '<div class="cf-form-description">' + description + '</div>';
                 }
                
                 // Generate rows for all current data
