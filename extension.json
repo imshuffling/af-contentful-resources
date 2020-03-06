@@ -1,29 +1,19 @@
 {
-  "id": "cf-repeater",
-  "name": "Repeater",
-  "srcdoc": "index.html",
-  "fieldTypes": ["Object"],
+  "id": "default-field-value",
+  "name": "Default value for a field",
+  "srcdoc": "extension.html",
+  "fieldTypes": ["Symbol"],
   "parameters": {
     "instance": [
       {
-        "id": "configUrl",
-        "type": "Symbol",
-        "name": "URL of config JSON for this repeater"
-      },
-      {
-        "id": "layout",
+        "id": "defaultColor",
+        "name": "Default color",
+        "description": "Set which color is the default color",
         "type": "Enum",
-        "name": "Layout",
-        "options": [{"cf-form-layout__rows": "Single Rows"}, {"cf-form-layout__cols": "Columns"}],
-        "default": "cf-form-layout__rows",
+        "options": [{"#0000FF": "blue"}, {"#FFFF00": "yellow"}, {"#FF0000": "red"}],
+        "labels": {"empty": "Choose a color"},
         "required": true
-      },
-      {
-        "id": "description",
-        "type": "Symbol",
-        "name": "Description"
       }
-    ],
-    "installation": []
+    ]
   }
 }
