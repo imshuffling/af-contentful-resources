@@ -1,0 +1,237 @@
+@charset 'utf-8';
+@import 'settings';
+@import '../bower_components/foundation-sites/scss/foundation';
+@include foundation-global-styles;
+@include foundation-button;
+@include foundation-forms;
+
+/**
+ * Custom CSS
+ */
+
+$single-input-height: 2.5rem;
+
+#repeater {
+
+    /**
+     * Basic structure
+     */
+    &.cf-form-layout__rows {
+
+        .cf-form-col {
+            padding: .75rem 0 1rem;
+            border-bottom: 1px solid $medium-gray;
+
+            &:first-child {
+                padding-top: 0;
+            }
+
+            &:last-child {
+                padding-bottom: 0;
+                border: 0;
+            }
+
+            &.cf-form-col__radio,
+            &.cf-form-col__checkbox {
+                label:not(.cf-form-input__label) {
+                    display: inline-block;
+                    margin-right: 1rem;
+                }
+            }
+        }
+    }
+
+    &.cf-form-layout__cols {
+        .cf-form-row__repeater {
+            display: flex;
+
+            &.ui-sortable-helper {
+                padding: 1rem 1rem;
+            }
+
+            .cf-form-col {
+                margin: 0 .5rem;
+
+                &:first-child {
+                    margin-left: 0;
+                }
+
+                &:last-child {
+                    margin-right: 0;
+                }
+
+            }
+
+            .cf-form-col__action {
+                text-align: center;
+            }
+        }
+    }
+
+    .cf-form-row__repeater {
+        padding: 1rem 0;
+        border-bottom: 3px solid $medium-gray;
+
+        &.ui-sortable-helper {
+            padding: 1rem;
+            border-top: 3px solid $medium-gray;
+            background-color: #fff;
+            box-shadow: .25rem .25rem 1rem rgba($black, .3);
+        }
+    }
+
+    .cf-form-col {
+        width: 100%;
+
+        &.cf-form-col__action {
+            width: auto;
+        }
+    }
+
+    .cf-form-hint {
+        line-height: 1.2;
+        color: $medium-gray;
+        font-style: italic;
+        font-weight: 400;
+
+        &.cf-form-description {
+            margin-top: 0;
+        }
+    }
+
+    .cf-form-input__label {
+        padding: 0;
+        font-weight: bold;
+        margin-bottom: .5rem;
+    }
+
+    .cf-form-input__instructions {
+        margin-top: -.5rem;
+        margin-bottom: .75rem;
+    }
+
+    .cf-form-col__action {
+        .cf-btn-remove {
+            width: 1.5rem;
+            height: 1.5rem;
+            background: $alert-color;
+            color: #fff;
+            line-height: 0;
+            border-radius: 50%;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: .875rem;
+            transition: all .2s ease-in-out;
+
+            &:hover {
+                background: scale-color($alert-color, $lightness: -15%);
+                cursor: pointer;
+            }
+        }
+    }
+    
+    /**
+     * Form fields
+     */
+    input.cf-form-input,
+    textarea.cf-form-input,
+    select.cf-form-input {
+        margin-bottom: 0;
+        padding: .625rem;
+        border: 1px solid $light-gray;
+        font-size: .875rem;
+    }
+
+    input.cf-form-input {
+        height: $single-input-height;
+    }
+
+    textarea.cf-form-input {
+        height: $single-input-height*3;
+    }
+
+    [type="radio"].cf-form-input,
+    [type="checkbox"].cf-form-input {
+        width: auto;
+        height: auto;
+        display: inline-block;
+    }
+
+
+    /**
+     * Select 2
+     */
+    .select2-container--default {
+        width: 100% !important;
+
+        &.select2-container--focus {
+            .select2-selection--single,
+            .select2-selection--multiple {
+                border-color: $primary-color;        }
+
+            .select2-selection--multiple {
+                box-shadow: 0 0 5px $primary-color;
+            }
+        }
+
+        .select2-selection--single,
+        .select2-selection--multiple {
+            width: 100%;
+            border-color: $light-gray;
+            border-radius: 0;       
+        }
+
+        .select2-selection--single {
+            height: $single-input-height;
+
+            .select2-selection__rendered {
+                padding-top: .625rem;
+                padding-bottom: .625rem;
+                padding-left: .625rem;
+                height: $single-input-height;
+                line-height: 1.2;
+            }
+
+            .select2-selection__arrow {
+                height: $single-input-height;
+            }
+        }
+
+        .select2-search--dropdown {
+            .select2-search__field {
+                height: auto;
+                margin-top: 0;
+                margin-bottom: 0;
+                border-color: $light-gray;
+            }
+        }
+
+        .select2-selection--multiple {
+            min-height: $single-input-height*2;
+
+            .select2-selection__rendered {
+                padding-left: .625rem;
+                padding-left: .625rem;
+
+                .select2-selection__choice,
+                .select2-search--inline {
+
+                    margin-top: .625rem;
+                    // display: inline-block;
+                    // vertical-align: middle;
+                    // float: none;
+                }
+
+                .select2-search__field {
+                    height: auto;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+}
+
+#add {
+    margin-top: 1rem;
+}
