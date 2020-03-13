@@ -195,9 +195,9 @@
                     guid = '_' + generateGuid(),
                     inputValue = ( typeof data !== 'undefined' && data[field.name] ) ? data[field.name] : field.value;
 
-                    // Add label and instructions
-                    rows += ( typeof field.label !== 'undefined' && field.label ) ? '<label class="cf-form-input__label">' + field.label + '</label>' : '' ;
-                    rows += ( typeof field.instruction !== 'undefined' && field.instruction ) ? '<div class="cf-form-hint cf-form-input__instructions">' + field.instruction + '</div>' : '' ;
+                // Add label and instructions
+                rows += ( typeof field.label !== 'undefined' && field.label ) ? '<label class="cf-form-input__label">' + field.label + '</label>' : '' ;
+                rows += ( typeof field.instruction !== 'undefined' && field.instruction ) ? '<div class="cf-form-hint cf-form-input__instructions">' + field.instruction + '</div>' : '' ;
 
                 switch (field.type) {
                     case 'text':
