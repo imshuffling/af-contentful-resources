@@ -96,6 +96,7 @@
                     // Initilize select2 and sortable
                     $('select.cf-form-input').select2();
                     $( "#repeater" ).sortable();
+                    $( '#repeater' ).on( 'sortupdate', inputUpdateHandler );
 
                     // Initialize listeners for generated fields
                     addFieldListeners();
@@ -324,13 +325,13 @@
                 var fieldData = [];
 
                 // Get generate rows on repeater field
-                var repeaterRows = $( '.cf-form-row__repeater' );
+                var repeaterRows = $( '.cf-form-row__repeater:not(.ui-sortable-placeholder)' );
 
                 // Loop through each row to build json array
                 for ( var i = 0; i < repeaterRows.length; i++ ) {
 
                     // Determine number of columns per row
-                    var rowColumns = $( repeaterRows[i] ).find( '.cf-form-col:not(.cf-form-col__action' );
+                    var rowColumns = $( repeaterRows[i] ).find( '.cf-form-col:not(.cf-form-col__action)' );
                     var jsonObject = {};
 
                     // Loop through each column in the current row
