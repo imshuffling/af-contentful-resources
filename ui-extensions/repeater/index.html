@@ -85,7 +85,7 @@
                 }
                
                 // Generate rows for all current data
-                if ( typeof currentData !== 'undefined' || currentData !== [] ) {
+                if ( typeof currentData !== 'undefined') {
 
                     // Build rows
                     currentData.forEach(function( data, index, array ){
@@ -97,16 +97,17 @@
                     });
                     target.innerHTML += html;
 
-                    // Initilize select2 and sortable
-                    $('select.cf-form-input').select2();
-                    $( "#repeater" ).sortable();
-                    $( '#repeater' ).on( 'sortupdate', inputUpdateHandler );
-
-                    // Initialize listeners for generated fields
-                    addFieldListeners();
-                    addSelect2Listeners();
-
                 }
+
+                // Initilize select2 and sortable
+                $('select.cf-form-input').select2();
+                $( "#repeater" ).sortable();
+                $( '#repeater' ).on( 'sortupdate', inputUpdateHandler );
+
+                // Initialize listeners for generated fields
+                addFieldListeners();
+                addSelect2Listeners();
+
             }
 
             /**
