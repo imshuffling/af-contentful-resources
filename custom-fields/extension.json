@@ -1,0 +1,9 @@
+{
+  "id": "cf-customFields",
+  "name": "Custom Fields",
+  "srcdoc": "./index.html",
+  "fieldTypes": ["Object"],
+  "parameters": {
+    "instance": []
+  }
+}

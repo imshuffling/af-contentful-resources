@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://contentful.github.io/ui-extensions-sdk/cf-extension.css">
+    <link rel="stylesheet" href="https://contenful-sandbox.s3.amazonaws.com/repeater.css">
+    <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+
+<body>
+    <div class="cf-form-wrap cf-form-layout__cols" id="repeater"></div>
+    <button class="cf-btn-primary cf-btn-add" id="add">Add Row</button>
+
+    <script>
+
+        // When UI Extensions SDK is loaded the callback will be executed
+        window.contentfulExtension.init( initExtension );
+
+        /**
+         * Initilize SDK and setup methods
+         * @param  {object} api
+         * @return null
+         */
+        function initExtension( api ) {
+
+            // Set a hardcoded config
+            var config = {
+                "name": "Custom Fields",
+                "version" : "1.0",
+                "type": "repeater",
+                "fields": [
+                {
+                    "name": "key",
+                    "label": "Key",
+                    "instruction": "",
+                    "type": "text",
+                    "validation": "",
+                    "width": "33.3333%",
+                    "value": "",
+                    "placeholder": ""
+                },
+                {
+                    "name": "value",
+                    "label": "Value",
+                    "instruction": "",
+                    "type": "textarea",
+                    "validation": "",
+                    "width": "66.6666%",
+                    "value": "",
+                    "placeholder": ""
+                }]
+            }
+
+            // Init
+            initBuild();
+
+            // User actions with callbacks
+            $( '#add' ).on( 'click', addRow );
+            $( '#repeater' ).on( 'click', '.cf-btn-remove', removeRow );        
+
+            /**
+             * Initial form build and set previous data
+             * @return {null}
+             */
+            function initBuild() {
+
+                // Automatically adjust UI Extension size in the Web App
+                api.window.startAutoResizer();
+
+                // Check for existing values
+                var currentData = api.field.getValue();
+              
+                // Convert existing to array
+                var array = [];
+                for(var i in currentData) {
+                    array.push([i, currentData[i]]);
+                }              
+                currentData = array;
+
+                // Set vars
+                    var target = document.querySelector('#repeater');
+                    var row = '';
+                    var html = '';
+               
+                // Generate rows for all current data
+                if ( typeof currentData !== 'undefined' || currentData !== {} ) {
+
+                    // Build rows
+                    currentData.forEach(function( data, index, array ){
+                        row = config.fields.map(function( item ) {
+                            field = buildColumnField( item, data );
+                            return field;
+                        }).join('');
+                        html += buildRow( row );
+                    });
+                    target.innerHTML += html;
+
+                    // Initilize sortable
+                    $( '#repeater' ).sortable();
+                    $( '#repeater' ).on( 'sortupdate', inputUpdateHandler );
+
+                    // Initialize listeners for generated fields
+                    addFieldListeners();
+
+                }
+            }
+
+            /**
+             * Set listeners for all generic input fields
+             * @return null
+             */
+            function addFieldListeners() {
+                document.querySelectorAll( '.cf-form-input' ).forEach( item => {
+                    item.addEventListener( 'input', inputUpdateHandler );
+                });
+            }
+
+            /**
+             * Callback to field updates to generate data for updating CF
+             * @return null
+             */
+            function inputUpdateHandler() {
+                debounce( generateData(), 250 );
+            }
+
+            /**
+             * Parse the column element and find fields and extract values
+             * @param  {element} column
+             * @return {string|array}
+             */
+            function getColumnFieldValue( column, value ) {
+                var columnField = $( column ).find( '.cf-form-input' );
+                if ( typeof columnField === 'undefined' ) return '';
+                return columnField.val();
+            }
+
+            /**
+             * Find and set the value of each column field
+             * @param  {element} column
+             * @param  {string} value
+             * @return {null}
+             */
+            function setColumnFieldValue( column, value ) {
+                var columnField = $( column ).find( '.cf-form-input' );
+                if ( typeof columnField === 'undefined' ) return '';
+                columnField.val(value);
+                return;
+            }
+
+
+            /**
+             * Build html column and input field based on json config
+             * @param  {array} field
+             * @param  {array} data
+             * @return {string}
+             */
+            function buildColumnField( field, data ) {
+                if ( typeof field === 'undefined' ) return '';
+
+                var rows = '',
+                    guid = '_' + generateGuid(),
+                    customFieldKey = ( typeof data !== 'undefined' && data[0] ) ? data[0] : '',
+                    customFieldValue = ( typeof data !== 'undefined' && data[1] ) ? data[1] : '';
+
+                // Add label and instructions
+                rows += ( typeof field.label !== 'undefined' && field.label ) ? '<label class="cf-form-input__label">' + field.label + '</label>' : '' ;
+                rows += ( typeof field.instruction !== 'undefined' && field.instruction ) ? '<div class="cf-form-hint cf-form-input__instructions">' + field.instruction + '</div>' : '' ;
+
+                switch (field.type) {
+                    case 'text':
+                        rows += '<input class="cf-form-input" type="' + field.type + '" name="' + field.name + guid + '" value="' + customFieldKey + '" placeholder="' + field.placeholder + '" >';
+                        break;
+                    case 'textarea':
+                        rows += '<textarea class="cf-form-input" name="' + field.name + guid + '" placeholder="' + field.placeholder + '" >' + customFieldKey + '</textarea>';
+                        break;
+                    default:
+                        rows += '<p>Invalid</p>';
+                }
+
+                return '<div class="cf-form-col cf-form-col__' + field.type + '" input-id="' + field.name + '" style="width:' + field.width + '">' + rows + '</div>';
+
+            }
+
+            /**
+             * Generate a temporary, unique identifier for form names
+             * @return {string}
+             */
+            function generateGuid() {
+                return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            }
+
+            /**
+             * Build html string for row of fields
+             * @param  {string} rows
+             * @return {string}
+             */
+            function buildRow( row ) {
+                var guid = generateGuid();
+                var removeButton = '<div class="cf-form-col cf-form-col__action"><label class="cf-form-input__label">Remove</label><button class="cf-btn-remove" for="' + guid + '">x</button></div>';
+                return '<div class="cf-form-row cf-form-row__repeater" data-id="' + guid + '">' + row + removeButton + '</div>';
+            }
+
+            /**
+             * Generate a row of input fields
+             */
+            function addRow() {
+
+                // Build field from config
+                var target = document.querySelector( '#repeater' );
+                var newRow = config.fields.map(function( item ) {
+                    field = buildColumnField( item );
+                    return field;
+                }).join('');
+
+                // Append and re-init listeners
+                target.insertAdjacentHTML( 'beforeend', buildRow( newRow ) );
+                addFieldListeners();
+
+            }
+
+            /**
+             * Remove target row of input fields and update
+             */
+            function removeRow() {
+
+                // Confirm via SDK
+                api.dialogs
+                    .openConfirm({
+                        title: 'Delete Row',
+                        message: 'Are you sure you want to remove this row?',
+                        intent: 'positive',
+                        confirmLabel: 'Yes, remove it',
+                        cancelLabel: 'Cancel'
+                    })
+                    .then( result => {
+                        if ( result === true ) {
+
+                            // Remove and update
+                            $( this ).parents( '.cf-form-row__repeater' ).remove();
+                            debounce( generateData(), 250 );
+
+                        }
+                    })
+
+            }
+
+            /**
+             * Generate field data and set value
+             */
+            function generateData() {
+
+                // Build basic vars
+                var fieldData = [];
+
+                // Get generate rows on repeater field
+                var repeaterRows = $( '.cf-form-row__repeater:not(.ui-sortable-placeholder)' );
+                var jsonObject = {};
+
+                // Loop through each row to build json array
+                for ( var i = 0; i < repeaterRows.length; i++ ) {
+
+                    // Determine number of columns per row
+                    var rowColumns = $( repeaterRows[i] ).find( '.cf-form-col:not(.cf-form-col__action)' );
+
+                    // Set key/value pairs - key is always [0], value is always [1]
+                    var key = getColumnFieldValue( rowColumns[0] );
+
+                    // Letters and underscores only for keys
+                    key = key.replace(/[^a-zA-Z_]/g, '');
+                    setColumnFieldValue( rowColumns[0], key );
+
+                    var val = getColumnFieldValue( rowColumns[1] );
+                    jsonObject[key] = val;
+
+                }
+
+                // Set value for content update
+                console.log(jsonObject);
+                api.field.setValue(jsonObject);
+            }
+
+            /**
+             * Generic debouce: http://davidwalsh.name/javascript-debounce-function
+             * @param  {function} func
+             * @param  {integer} wait
+             */
+            function debounce( func, wait ) {
+                var timeout;
+                return function() {
+                    var context = this, args = arguments;
+                    var later = function () {
+                        timeout = null;
+                        func.apply(context, args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                    if (!timeout) func.apply(context, args);
+                };
+            }
+
+        } 
+
+    </script>
+</body>
