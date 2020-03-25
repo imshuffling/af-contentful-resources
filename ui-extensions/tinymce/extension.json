@@ -1,7 +1,7 @@
 {
   "id": "TinyMCE",
   "name": "TinyMCE",
-  "src": "https://af-contentful.s3.amazonaws.com/tinymce/",
+  "src": "https://af-contentful.s3.amazonaws.com/tinymce/index.html",
   "fieldTypes": ["Text"],
   "parameters": {
     "installation": [
