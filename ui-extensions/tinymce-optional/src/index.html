@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>TinyMCE</title>
+    <link rel="stylesheet" href="https://contentful.github.io/ui-extensions-sdk/cf-extension.css">
+    <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
+    <script src="https://unpkg.com/lodash@4.17.11"></script>
+
+    <style type="text/css">
+      .tox-dialog {
+        /* The advcode dialog was too tall and being clipped */
+        max-height: calc(100% - 5px) !important;
+      }
+      body {
+        border: 1px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      div#editor {
+        width:100%;
+      }
+      .cf-btn-primary {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="add" class="cf-btn-primary">Add Content</button>
+    <div id="editor"></div>
+    <script src="./tinymce-for-contentful-optional.js"></script>
+  </body>
+</html>

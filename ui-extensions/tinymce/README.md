@@ -1,6 +1,7 @@
 # TinyMCE
 
 See forked repo of original: https://github.com/AgoraFinancial/tinymce-contentful
+
 TinyMCE documentation: https://github.com/tinymce/tinymce-contentful
 
 ## Version
