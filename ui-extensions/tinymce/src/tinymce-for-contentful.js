@@ -11,6 +11,12 @@ const locale = "en-US";
 
 // Run CF SDK
 window.contentfulExtension.init(function(api) {
+  
+  /**
+   * Init for TinyMCE
+   * @param  {object} api
+   * @return {null}
+   */
   function tinymceForContentful(api) {
     api.window.startAutoResizer();
 
