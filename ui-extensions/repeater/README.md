@@ -24,3 +24,6 @@ Each instance of the extension in a content model has three (3) setting options:
 ## Future Updates
 * Validation per field, set via config (TBD: Regex, jQuery Validation, etc.)
 * Additional fields (TBD: Reference)
+
+## Configs
+* Stock Recommendations: https://af-contentful.s3.amazonaws.com/config/stock-recommendations.json
