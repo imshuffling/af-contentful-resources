@@ -50,8 +50,17 @@ function initExtension( api ) {
       resize: false,
       image_title: true,
       image_caption: true,
-      image_description: true,
+      image_dimensions: false,
       branding: false,
+      content_style: 'img.alignleft { float: left; margin: 5px 20px 20px 0; } ' +
+        'img.alignright { float: right; margin: 5px 0 20px 20px; } ' +
+        'img.aligncenter, img.alignjustify { display: block; margin: 5px auto 20px auto; }',
+      formats: {
+        alignleft: { selector: 'img', classes: 'alignleft' },
+        aligncenter: { selector: 'img', classes: 'aligncenter' },
+        alignright: { selector: 'img', classes: 'alignright' },
+        alignjustify: { selector: 'img', classes: 'alignjustify' },
+      },
       
       // Enable file browser
       file_picker_types: 'file image media',
@@ -118,6 +127,18 @@ function initExtension( api ) {
         editor.on('change keyup setcontent blur', throttled);
       }
     });
+
+    /**
+     * On image reize, update the src accordingly to use CF's CDN features via callback
+     * Strip old query params, append new, update element
+     */
+    tinymce.activeEditor.on( 'ObjectResized', function(e) {
+      if (e.target.nodeName == 'IMG') {
+         var new_src = removeQueryString(e.target.currentSrc) + '?w=' + e.width + '&h=' + e.height;
+         e.target.dataset.mceSrc = new_src;
+      }
+    });
+
   }
 
   /**
@@ -150,8 +171,9 @@ function initExtension( api ) {
         switch (type) {
           case 'image':
             var width = file[locale].details.image.width,
-                height = file[locale].details.image.height,
-                content = '<img src="' + url + '" title="' + title + '" alt="' + title + '" width="' + width + '" height="' + height + '" />';
+                height = file[locale].details.image.height;            
+            url = url + '?w=' + width + '&h=' + height;
+            content = '<img src="' + url + '" title="' + title + '" alt="' + title + '" width="' + width + '" height="' + height + '" />';
             break;
           case 'video':
             content += '<div style="max-width: 650px;" data-ephox-embed-iri="' + url + '">';
@@ -208,7 +230,9 @@ function initExtension( api ) {
           .then( selectedEntry => {
             var file = selectedEntry.fields.file,
                 title = selectedEntry.fields.title[locale],
-                url = 'https:' + file[locale].url;
+                width = file[locale].details.image.width,
+                height = file[locale].details.image.height,
+                url = 'https:' + file[locale].url + '?w=' + width + '&h=' + height;
             callback( url, { alt: title, title: title } ); // Optional: class attribute
           })
       }
@@ -279,4 +303,13 @@ function isEmpty(obj) {
             return false;
     }
     return true;
+}
+
+/**
+ * Remove query string parameters from end of URL
+ * @param  {string} url
+ * @return {string}
+ */
+function removeQueryString(url) {
+  return url.split('?')[0];
 }
