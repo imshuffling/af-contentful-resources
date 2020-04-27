@@ -1,0 +1,66 @@
+{
+    "name": "Stock Recommendations",
+    "version" : "1.0",
+    "type": "repeater",
+    "fields": [
+    {
+        "name": "action",
+        "label": "Action",
+        "instruction": "",
+        "type": "select",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "options": [
+        {
+            "value": "buy",
+            "label": "Buy"
+        },
+        {
+            "value": "sell",
+            "label": "Sell"
+        },
+        {
+            "value": "hold",
+            "label": "Hold"
+        },
+        {
+            "value": "buyToClose",
+            "label": "Buy To Close"
+        },
+        {
+            "value": "sellToOpen",
+            "label": "Sell To Open"
+        }]
+    },
+    {
+        "name": "tickerSymbol",
+        "label": "Ticker Symbol",
+        "instruction": "",
+        "type": "text",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "placeholder": ""
+    },
+    {
+        "name": "stockName",
+        "label": "Stock Name",
+        "instruction": "",
+        "type": "text",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "placeholder": ""
+    },
+    {
+        "name": "actionDescription",
+        "label": "Action Description",
+        "instruction": "",
+        "type": "textarea",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "placeholder": ""
+    }]
+}

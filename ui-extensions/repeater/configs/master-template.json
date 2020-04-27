@@ -1,0 +1,84 @@
+{
+    "name": "Master",
+    "version" : "1.0",
+    "type": "repeater",
+    "fields": [
+    {
+        "name": "text",
+        "label": "Text Input",
+        "instruction": "",
+        "type": "text",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "placeholder": ""
+    },
+    {
+        "name": "textarea",
+        "label": "Textarea",
+        "instruction": "",
+        "type": "textarea",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "placeholder": ""
+    },
+    {
+        "name": "select",
+        "label": "Select",
+        "instruction": "",
+        "type": "select",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "options": [
+        {
+            "value": "one",
+            "label": "Option One"
+        },
+        {
+            "value": "two",
+            "label": "Option Two"
+        }]
+    },
+    {
+        "name": "radio",
+        "label": "Radio Buttons",
+        "instruction": "",
+        "type": "radio",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "options": [
+        {
+            "value": "radio1",
+            "label": "Radio One"
+        },
+        {
+            "value": "radio2",
+            "label": "Radio Two"
+        }]
+    },
+    {
+        "name": "checkbox",
+        "label": "Checkboxes",
+        "instruction": "",
+        "type": "checkbox",
+        "validation": "",
+        "width": "",
+        "value": "",
+        "options": [
+        {
+            "value": "check1",
+            "label": "Checkbox One"
+        },
+        {
+            "value": "check2",
+            "label": "Checkbox Two"
+        },
+        {
+            "value": "check3",
+            "label": "Checkbox Three"
+        }]
+    }]
+}
