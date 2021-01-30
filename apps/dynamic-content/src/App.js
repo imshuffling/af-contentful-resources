@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Switch, TextField, Flex, ValidationMessage } from '@contentful/forma-36-react-components'
 
+import Demo from './Demo'
 import Lists from './Lists'
 import Template from './Template'
 
@@ -50,17 +51,18 @@ const App = ({ sdk }) => {
    * Set state/constants
    */
   const margin = 'spacingM'
-  const iterableObject = sdk.entry.fields.iterableObject && sdk.entry.fields.iterableObject.getValue() ? sdk.entry.fields.iterableObject.getValue() : initialState
+  // const iterableObject = sdk.entry.fields.iterableObject && sdk.entry.fields.iterableObject.getValue() ? sdk.entry.fields.iterableObject.getValue() : initialState
+  const iterableObject = initialState
   const [setup, setSetup] = useState(false)
   const [data, setData] = useState(iterableObject)
 
   /**
    * Update field when data changes
    */
-  useEffect(() => {
-    const field = sdk.entry.fields.iterableObject
-    field.setValue(data)
-  }, [data])
+  // useEffect(() => {
+  //   const field = sdk.entry.fields.iterableObject
+  //   field.setValue(data)
+  // }, [data])
 
   /**
    * When toggling set
@@ -156,7 +158,7 @@ const App = ({ sdk }) => {
         sdk={sdk}
         initialValue={data.listIds}
         updateValue={updateValue}
-        appParameters={sdk.parameters.instance}
+        // appParameters={sdk.parameters.instance}
       />
     </Flex>
   )
@@ -177,18 +179,22 @@ const App = ({ sdk }) => {
 
   return (
     <div className="app">
-      <Flex>
-        <Switch
-          id="sendEmail"
-          labelText="Setup Iterable Campaign?"
-          isChecked={setup}
-          onToggle={() => setSetup(!setup)}
-        />
-      </Flex>
-      {setup && listSelect}
-      {setup && templateSelect}
-      {setup && simpleFields}
-      {setup && !data.sendEmail ? requirements : null}
+      <Demo
+        sdk={sdk}
+        appParameters={sdk.parameters.instance}
+      />
+      {/* <Flex> */}
+      {/*   <Switch */}
+      {/*     id="sendEmail" */}
+      {/*     labelText="Setup Iterable Campaign?" */}
+      {/*     isChecked={setup} */}
+      {/*     onToggle={() => setSetup(!setup)} */}
+      {/*   /> */}
+      {/* </Flex> */}
+      {/* {setup && listSelect} */}
+      {/* {setup && templateSelect} */}
+      {/* {setup && simpleFields} */}
+      {/* {setup && !data.sendEmail ? requirements : null} */}
     </div>
   );
 }
