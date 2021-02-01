@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import App from './App'
-import Dialog from './Dialog'
 import { init, locations } from '@contentful/app-sdk'
 
 import './index.css'
@@ -31,14 +30,6 @@ init((sdk) => {
       document.getElementById('root')
     )
 
-  } else if (sdk.location.is(locations.LOCATION_DIALOG)) {
-    // Main app render and pass SDK as prop
-    ReactDOM.render(
-      <React.StrictMode>
-        <Dialog sdk={sdk} />
-      </React.StrictMode>,
-      document.getElementById('root')
-    )
   } else {
     return null
   }
