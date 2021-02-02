@@ -1,45 +1,48 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import {
+  Paragraph,
+  Spinner,
+  ValidationMessage,
+  Flex,
+  FormLabel,
+  TextField,
+  CopyButton,
+  Card,
+  Typography,
+  TextLink,
+  CardActions,
+  DropdownList,
+  DropdownListItem,
+  Tag,
+  HelpText
+} from '@contentful/forma-36-react-components'
 
-import { Select, Option, Paragraph, Spinner, ValidationMessage, Flex, FormLabel, Button, IconButton, TextField, CopyButton, Tabs, Tab,
-Dropdown, DropdownList, DropdownListItem, Card, Typography, TextLink, EntryCard, CardActions, Heading, Tag } from '@contentful/forma-36-react-components'
+const Demo = ({ sdk }) => {
 
-import { locations } from '@contentful/app-sdk'
-
-const Demo = ({ sdk, initialValue, updateValue, appParameters }) => {
-
-
-  console.log('sdk', sdk);
-
-  
-
-  // List of content that can be linked
-  const contentTypes = appParameters.contentTypes.replace(/ /g,'').split(',')
+  /**
+   * Set state/constants
+   */
+  const contentType = sdk.parameters.instance.dynamicContentType
   const locale = 'en-US'
-
-
   const [entries, setEntries] = useState([])
-  const [foobar, setFoobar] = useState('foo')
-  const [duplicateMessage, setDuplicateMessage] = useState(false)
-  const [dummy, setDummy] = useState(false)
-  console.log('after state entries', entries);
-  // console.log('foobar', foobar);
+  const [showDuplicateMessage, setShowDuplicateMessage] = useState(false)
+  const [refresh, forceRefresh] = useState(false)
 
 
+  /**
+   * On initial load, query entry for dynamic embeds and populate the field
+   */
   useEffect(() => {
 
-    console.log('start prefil');
+    // Ignore new posts
     if (entries.length > 0) return
 
-      // var targetField = sdk.entry.fields.dynamicContentOLD;
+      // Get the field data
       var targetField = sdk.entry.fields.dynamicContent.getValue();
-      console.log('cur value2', targetField);
 
+      // If available, built array of ids for query
       if ( targetField ) {
-
         const array = targetField.map(entry => entry.sys.id)
-        console.log('array', array);
-
-        // const data = sdk.space.getEntry(targetField[0].sys.id)
         const data = sdk.space.getEntries(
           {
             'sys.id[in]': array
@@ -47,49 +50,27 @@ const Demo = ({ sdk, initialValue, updateValue, appParameters }) => {
         )
         data.then(res => {
           setEntries(res.items)
-          console.log('list', res.items);
         })
       }
 
   }, [])
 
 
-//   useEffect(() => {
-//     console.log('start process');
-//     if (entries.length > 0) {
-//       console.log('update');
-// 
-//       sdk.field
-//       .setValue([{
-//                 "sys": {
-//                     "type": "Link",
-//                     "linkType": "Entry",
-//                     "id": entries[0].sys.id
-//                 }
-//             }])
-//       .then((data) => {
-//         console.log('1', data); // Returns "foo".
-//       })
-//       .catch((err) => {
-//         console.log('2', err);
-//       })
-//       .then(()=> {
-//         console.log('force re-render');
-//         setDummy(!dummy)
-//       })
-// 
-//     }
-//   }, [entries])
-
-
+  /**
+   * If entries exisit or have increased, update the value
+   */
   useEffect(() => {
     if (entries.length > 0) setDataValues()
   }, [entries])
 
-
+  /**
+   * Set the field value for publishing
+   * @return {[type]} [description]
+   */
   const setDataValues = () => {
-    const updateValues = entries.map(entry => {
-      console.log('entry', entry);
+    
+    // Build array of references for update
+    const updatedData = entries.map(entry => {
       return {
         "sys": {
             "type": "Link",
@@ -98,195 +79,37 @@ const Demo = ({ sdk, initialValue, updateValue, appParameters }) => {
         }
       }
     })
-    console.log('updateValues', updateValues);
 
-    // return;
-
+    // Set value for publishing
     sdk.field
-    .setValue(updateValues)
-    .then((data) => {
-      console.log('1', data); // Returns "foo".
+    .setValue(updatedData)
+    .then((result) => {})
+    .catch((error) => {
+      console.log('Error', error);
     })
-    .catch((err) => {
-      console.log('2', err);
-    })
-  }
-
-  // let viewable = null
-
-  // const viewable = entries.map(item => {
-  //   return (
-  //     <Flex marginTop="spacingM" key={item.sys.id}>
-  //       <Card style={{"width":"100%"}}>
-  //         <Flex justifyContent="space-between">
-  //           {/* <FormLabel>hiya</FormLabel> */}
-  //           <FormLabel>{item.fields.title ? item.fields.title[locale] : 'Untitled'}</FormLabel>
-  //           <CardActions position="left">
-  //             <DropdownList>
-  //               <DropdownListItem onClick={() => handleEditSelected(item.sys.id)}>Edit</DropdownListItem>
-  //               <DropdownListItem onClick={() => handleRemoveSelected(item.sys.id)}>Remove</DropdownListItem>
-  //             </DropdownList>
-  //           </CardActions>
-  //         </Flex>
-  //         <Flex alignItems="flex-end" justifyContent="space-between">
-  //           <TextField
-  //             value={item.fields.slug ? `{{${item.fields.slug[locale]}}}` : 'undefined'}
-  //             name="embed"
-  //             id="embed"
-  //             width="full"
-  //             textInputProps={{
-  //               disabled: true,
-  //             }}
-  //           />
-  //           <CopyButton
-  //             copyValue={item.fields.slug ? `{{${item.fields.slug[locale]}}}` : ''}
-  //             style={{"marginLeft":"10px"}} />            
-  //         </Flex>
-  //       </Card>
-  //     </Flex>
-  //   )
-  // })
-
-
-  const handleAddExisting = () => {
-
-    setDuplicateMessage(false)
-
-    sdk.dialogs
-      .selectSingleEntry({
-        locale: 'en-US',
-        contentTypes: 'dynamicContent'
-      })
-      .then((result) => {
-        // console.log('result', result);
-
-        if (!result) return
-
-        const found = entries.find(item => {
-          return item.sys.id === result.sys.id
-        })
-
-        if (!found) {
-          // console.log('hit');
-          setEntries(prevState => {
-            return [
-              ...prevState,
-              result
-            ]
-          })
-          // setDataValues()
-        } else {
-          setDuplicateMessage(true)
-          console.log('already selected');
-        }
-      })
-  }
-
-
-  const handleEditSelected = id => {
-
-    setDuplicateMessage(false)
-
-    if (!id) return
-
-    sdk.navigator
-      .openEntry(
-        id,
-        { slideIn: { waitForClose: true } }
-        // { slideIn: true }
-      )
-      .then((result) => {
-        if (!result) return
-
-        console.log('result', result.entity);
-        // console.log('Edited', result.entity.sys.id);
-        const index = entries.findIndex(item => {
-          // console.log('item', item.sys.id);
-          // return true
-          return item.sys.id === result.entity.sys.id
-        })
-        // console.log('index', index);
-        let tempArray = entries
-        console.log('still result?', tempArray[index]);
-        tempArray[index] = result.entity
-        console.log('tempArray', tempArray);
-
-        setEntries(tempArray)
-        console.log('done');
-        // setDataValues()
-
-        setTimeout(() => { setDummy(!dummy) }, 2000);
-        
-
-        // setEntries(prevState => {
-        //   return [
-        //     ...prevState,
-        //     result
-        //   ]
-        // })
-      })
-  }
-
-  const handleRemoveSelected = id => {
-
-    console.log('Removing...');
-
-    console.log('entries before', entries);
-    setDuplicateMessage(false)
-
-
-    const workingEntries = [ ...entries ]
-    console.log('working', workingEntries); 
-
-    // return
-
-    if (!id) return
-
-    // console.log('result', result.entity);
-      // console.log('Edited', result.entity.sys.id);
-    const index = workingEntries.findIndex(item => {
-      return item.sys.id === id
-    })
-    console.log('index', index);
-    let tempArray = workingEntries
-
-    if (index > -1) {
-      tempArray.splice(index, 1);
-    }
-
-    // console.log('still result?', tempArray[index]);
-    // tempArray[index] = result.entity
-    console.log('tempArray', tempArray);
-
-    setEntries(tempArray)
-    // setEntries(prevState => {
-    //   if (index > -1) {
-    //     prevState.splice(index, 1);
-    //   }
-    //   console.log('prev', [ ...prevState]);
-    //   return prevState
-    // })
-
-    // setDataValues()
 
   }
 
-
-    //   const field = sdk.entry.fields.iterableObject
-  //   field.setValue(data)
-
-
+  /**
+   * Create a new reference via SDK
+   */
   const handleAddNew = () => {
 
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // Fire injection function
     sdk.navigator
       .openNewEntry(
-        'dynamicContent',
+        contentType,
         { slideIn: { waitForClose: true } }
       )
       .then((result) => {
-        console.log('result', result);
-        if (!result) return
 
+        // Drop if no result or canceled entry
+        if (!result || !result.entity) return
+
+        // Update entries  
         setEntries(prevState => {
           return [
             ...prevState,
@@ -298,157 +121,179 @@ const Demo = ({ sdk, initialValue, updateValue, appParameters }) => {
       });
   }
 
-  const structure = [
-    {
-      "id": "dynamic_content_12456",
-      "type": "reference",
-      "view": "web",
-      "content": "6VcyGK805uIdDFwDDOW3ff"
-    },
-    {
-      "id": "dynamic_content_78910",
-      "type": "snippet",
-      "view": "email",
-      "content": "Content/ad/html/embed content...."
-    },
-    {
-      "id": "dynamic_content_78910",
-      "type": "snippet",
-      "view": "default",
-      "content": "Content/ad/html/embed content...."
-    }
-  ]
+  /**
+   * Add reference to existing content via SDK
+   */
+  const handleAddExisting = () => {
 
-  const options = (
-    contentTypes.map(item => {
-      return (
-        <Option key={item} value={item}>Add new {item}</Option>
-      )
-    })
-  )
+    // Remove error messages
+    setShowDuplicateMessage(false)
 
-
-  const [isOpen, setOpen] = useState(false);
-
-  // console.log('isOpen', isOpen);
-
-
-  const handleDropclick = () => {
-    console.log('hi');
-
+    // Show finder dialog
     sdk.dialogs
-    .openCurrentApp({
-      title: "Select Or Add",
-      allowHeightOverflow: true,
-      shouldCloseOnOverlayClick: true,
-      shouldCloseOnEscapePress: true,
-      minHeigh: 500,
-      parameters: { contentTypes: contentTypes }
-    })
-    .then((data) => {
-      console.log('from prompts', data);
-      /* ... */
-    });
+      .selectSingleEntry({
+        locale: locale,
+        contentType: contentType
+      })
+      .then((result) => {
+
+        // Drop if no result
+        if (!result) return
+
+        // Find if selected entry is already in the queue
+        const found = entries.find(item => {
+          return item.sys.id === result.sys.id
+        })
+
+        // Updata entries, otherwise, show error about duplicates
+        if (!found) {
+          setEntries(prevState => {
+            return [
+              ...prevState,
+              result
+            ]
+          })
+        } else {
+          setShowDuplicateMessage(true)
+        }
+      })
   }
 
+  /**
+   * Use SDK to show slide in of referenced item and allow edits
+   * @param  {str} id [description]
+   */
+  const handleEditSelected = id => {
 
-    if (sdk.location.is(locations.LOCATION_DIALOG)) {
-    return (
-      <>
-        <h1>PROMPT</h1>
-        </>
+    // ID required
+    if (!id) return
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // show editor dialog
+    sdk.navigator
+      .openEntry(
+        id,
+        { slideIn: { waitForClose: true } }
       )
+      .then((result) => {
+        
+        // Drop if no result
+        if (!result) return
+
+        // Get location of edited entry
+        const index = entries.findIndex(item => {
+          return item.sys.id === result.entity.sys.id
+        })
+
+        // Create duplicate and update state
+        let tempArray = entries
+        tempArray[index] = result.entity
+        setEntries(tempArray)
+
+        // Force an update with delayed forced refresh
+        setTimeout(() => { forceRefresh(!refresh) }, 2000)
+
+      })
   }
 
-  const placeholder = (<Paragraph>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec odio. Quisque volutpat mattis eros. Nullam malesuada erat ut turpis. Suspendisse urna nibh, viverra non, semper suscipit, posuere a, pede.</Paragraph>)
+  /**
+   * Remove referenced item and update state and value
+   * @param  {str} id [description]
+   */
+  const handleRemoveSelected = id => {
 
-  const dummyClick = () => {
-    setDummy(!dummy)
+    // ID required
+    if (!id) return
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // Create duplicate data of current before modifying state
+    const workingEntries = [ ...entries ]
+
+    // Get location of removed entry
+    const index = workingEntries.findIndex(item => {
+      return item.sys.id === id
+    })
+
+    // Create duplicate, extract entry from array and update state
+    let tempArray = workingEntries
+    if (index > -1) tempArray.splice(index, 1)
+    setEntries(tempArray)
   }
 
-  //#cf-ui-dropdown-list
 
+  /**
+   * Build display dynamic content items
+   */
+  const embeds = entries.map(entry => {
 
+    // Conditionally check for entry status
+    let status
+    switch (true) {
+      case !entry.sys.publishedVersion:
+        status = 'draft'
+        break
+      case !!entry.sys.publishedVersion && entry.sys.version >= entry.sys.publishedVersion + 2:
+        status = 'changed'
+        break
+      case !!entry.sys.archivedVersion:
+        status = 'archived'
+        break
+      default:
+        status = 'published'
+        break;
+    }
 
+    return (
+      <Flex marginTop="spacingM" key={entry.sys.id}>
+        <Card style={{"width":"100%"}}>
+          <Flex justifyContent="space-between">
+            <Flex justifyContent="space-between" style={{'width': '100%', 'marginRight': '10px'}}>
+              <FormLabel>{entry.fields.title ? entry.fields.title[locale] : 'Untitled'}</FormLabel>
+              <Tag entityStatusType={status}>{status}</Tag>
+            </Flex>
+            <CardActions position="left">
+              <DropdownList>
+                <DropdownListItem onClick={() => handleEditSelected(entry.sys.id)}>Edit</DropdownListItem>
+                <DropdownListItem onClick={() => handleRemoveSelected(entry.sys.id)}>Remove</DropdownListItem>
+              </DropdownList>
+            </CardActions>
+          </Flex>
+          <Flex alignItems="flex-end" justifyContent="space-between">
+            <TextField
+              value={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : 'undefined'}
+              name="embed"
+              id="embed"
+              width="full"
+              textInputProps={{
+                disabled: true,
+              }}
+            />
+            <CopyButton
+              copyValue={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : ''}
+              style={{"marginLeft":"10px"}} />            
+          </Flex>
+        </Card>
+      </Flex>
+    )
+  })
 
   return (
     <div className="demo">
-      <Flex
-        // justifyContent="space-between"
-        // alignItems="center"
-      >
+      <Flex>
+        <HelpText>Create dynamic content embeds by adding snippets to this entry. Copy the bracketed tokens and paste into the main content area.</HelpText>
+      </Flex>
+      <Flex marginTop="spacingM">
         <TextLink icon="Search" onClick={handleAddExisting}>Choose from exisiting</TextLink>
-        <Paragraph style={{"marginLeft": "10px", "marginRight": "10px"}} onClick={dummyClick}>– or -</Paragraph>
+        <Paragraph style={{"marginLeft": "10px", "marginRight": "10px"}}>– or -</Paragraph>
         <TextLink icon="PlusCircle" onClick={handleAddNew}>Create new</TextLink>
-      {/*           <Select width="auto"> */}
-      {/*   <Option value="">Create new content</Option> */}
-      {/*   <Option>Add snippet</Option> */}
-      {/*   <Option>Add advertisement</Option> */}
-      {/* </Select> */}
       </Flex>
       <Flex marginTop="spacingM" flexDirection="column">
-        {duplicateMessage && <ValidationMessage>Cannot have duplicate choices.</ValidationMessage> }
-
-        {entries.map(entry => {
-          // console.log('item', item);
-
-          let status
-
-          switch (true) {
-            case !entry.sys.publishedVersion:
-              status = 'draft'
-              break
-
-            case !!entry.sys.publishedVersion && entry.sys.version >= entry.sys.publishedVersion + 2:
-              status = 'changed'
-              break
-
-            case !!entry.sys.archivedVersion:
-              status = 'archived'
-              break
-
-
-            default:
-              status = 'published'
-              break;
-          }
-
-
-          return (
-            <Flex marginTop="spacingM" key={entry.sys.id}>
-              <Card style={{"width":"100%"}}>
-                <Flex justifyContent="space-between">
-                  {/* <FormLabel>hiya</FormLabel> */}
-                  <Flex justifyContent="space-between" style={{'width': '100%', 'marginRight': '10px'}}>
-                    <FormLabel>{entry.fields.title ? entry.fields.title[locale] : 'Untitled'}</FormLabel>
-                    <Tag entityStatusType={status}>{status}</Tag>
-                  </Flex>
-                  <CardActions position="left">
-                    <DropdownList>
-                      <DropdownListItem onClick={() => handleEditSelected(entry.sys.id)}>Edit</DropdownListItem>
-                      <DropdownListItem onClick={() => handleRemoveSelected(entry.sys.id)}>Remove</DropdownListItem>
-                    </DropdownList>
-                  </CardActions>
-                </Flex>
-                <Flex alignItems="flex-end" justifyContent="space-between">
-                  <TextField
-                    value={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : 'undefined'}
-                    name="embed"
-                    id="embed"
-                    width="full"
-                    textInputProps={{
-                      disabled: true,
-                    }}
-                  />
-                  <CopyButton
-                    opyValue={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : ''}
-                    style={{"marginLeft":"10px"}} />            
-                </Flex>
-              </Card>
-            </Flex>
-          )
-        })}
-
+        {showDuplicateMessage && <ValidationMessage>Cannot have duplicate choices.</ValidationMessage>}
+        {embeds}
       </Flex>
     </div>
   )

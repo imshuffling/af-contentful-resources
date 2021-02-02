@@ -1,200 +1,302 @@
 import { useState, useEffect } from 'react'
-import { Switch, TextField, Flex, ValidationMessage } from '@contentful/forma-36-react-components'
+import {
+  Paragraph,
+  Spinner,
+  ValidationMessage,
+  Flex,
+  FormLabel,
+  TextField,
+  CopyButton,
+  Card,
+  Typography,
+  TextLink,
+  CardActions,
+  DropdownList,
+  DropdownListItem,
+  Tag,
+  HelpText
+} from '@contentful/forma-36-react-components'
 
-import Demo from './Demo'
-import Lists from './Lists'
-import Template from './Template'
+// import Demo from './Demo'
 
 const App = ({ sdk }) => {
 
   /**
-   * Initial data state
-   * @type {obj}
-   */
-  const initialState = {
-    "name": "",
-    "listIds": [],
-    "templateId": 0,
-    "sendEmail": false,
-    "subject-line": "",
-    "headline": "",
-    "preheader": ""
-  }
-
-  /**
-   * Configuration object for generating simple text fields
-   * @type {obj}
-   */
-  const simpleFieldsConfig = [
-    {
-      "key": "name",
-      "label": "Campaign Name",
-      "required": true
-    },
-    {
-      "key": "subject-line",
-      "label": "Subject Line",
-      "helper": "Defaults to entry title (if not provided)"
-    },
-    {
-      "key": "headline",
-      "label": "Headline",
-      "helper": "Defaults to entry title (if not provided)"
-    },
-    {
-      "key": "preheader",
-      "label": "Preheader"
-    }
-  ]
-
-  /**
    * Set state/constants
    */
-  const margin = 'spacingM'
-  // const iterableObject = sdk.entry.fields.iterableObject && sdk.entry.fields.iterableObject.getValue() ? sdk.entry.fields.iterableObject.getValue() : initialState
-  const iterableObject = initialState
-  const [setup, setSetup] = useState(false)
-  const [data, setData] = useState(iterableObject)
+  const contentType = sdk.parameters.instance.dynamicContentType
+  const locale = 'en-US'
+  const [entries, setEntries] = useState([])
+  const [showDuplicateMessage, setShowDuplicateMessage] = useState(false)
+  const [refresh, forceRefresh] = useState(false)
+
 
   /**
-   * Update field when data changes
-   */
-  // useEffect(() => {
-  //   const field = sdk.entry.fields.iterableObject
-  //   field.setValue(data)
-  // }, [data])
-
-  /**
-   * When toggling set
-   * @param  {[type]} ( [description]
-   * @return {[type]}   [description]
+   * On initial load, query entry for dynamic embeds and populate the field
    */
   useEffect(() => {
-    if (setup && data.templateId > 0 && data.listIds.length > 0 && data.name) {
-      updateValue('sendEmail', true)
-    } else {
-      updateValue('sendEmail', false)
-    }
-  }, [setup])
+
+    // Ignore new posts
+    if (entries.length > 0) return
+
+      // Get the field data
+      var targetField = sdk.entry.fields.dynamicContent.getValue();
+
+      // If available, built array of ids for query
+      if ( targetField ) {
+        const array = targetField.map(entry => entry.sys.id)
+        const data = sdk.space.getEntries(
+          {
+            'sys.id[in]': array
+          }
+        )
+        data.then(res => {
+          setEntries(res.items)
+        })
+      }
+
+  }, [])
 
 
   /**
-   * Update main data object, pass as callback to components
-   * Check if all parameters are checked to allow campaign creation
-   * @param  {str} key
-   * @param  {str|arr} value
-   * @return {null}
+   * If entries exisit or have increased, update the value
    */
-  const updateValue = (key, value) => {
-    setData( prevState => {
-      let temp = {
-        ...prevState,
-        [key]: value
-      }
+  useEffect(() => {
+    if (entries.length > 0) setDataValues()
+  }, [entries])
 
-      // Check for requires and verify if OK to create campaign
-      if (setup && temp.templateId > 0 && temp.listIds.length > 0 && temp.name) {
-        prevState = { ...prevState, "sendEmail": true }
-      } else {
-        prevState = { ...prevState, "sendEmail": false }
-      }
-
+  /**
+   * Set the field value for publishing
+   * @return {[type]} [description]
+   */
+  const setDataValues = () => {
+    
+    // Build array of references for update
+    const updatedData = entries.map(entry => {
       return {
-        ...prevState,
-        [key]: value
-       }
+        "sys": {
+            "type": "Link",
+            "linkType": "Entry",
+            "id": entry.sys.id
+        }
+      }
     })
+
+    // Set value for publishing
+    sdk.field
+    .setValue(updatedData)
+    .then((result) => {})
+    .catch((error) => {
+      console.log('Error', error);
+    })
+
   }
 
   /**
-   * Generate a list of simple text input fields based on config array
-   * @return {arr}
+   * Create a new reference via SDK
    */
-  const simpleFields = simpleFieldsConfig.map(field => {
+  const handleAddNew = () => {
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // Fire injection function
+    sdk.navigator
+      .openNewEntry(
+        contentType,
+        { slideIn: { waitForClose: true } }
+      )
+      .then((result) => {
+
+        // Drop if no result or canceled entry
+        if (!result || !result.entity) return
+
+        // Update entries  
+        setEntries(prevState => {
+          return [
+            ...prevState,
+            result.entity
+          ]
+        })
+
+
+      });
+  }
+
+  /**
+   * Add reference to existing content via SDK
+   */
+  const handleAddExisting = () => {
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // Show finder dialog
+    sdk.dialogs
+      .selectSingleEntry({
+        locale: locale,
+        contentType: contentType
+      })
+      .then((result) => {
+
+        // Drop if no result
+        if (!result) return
+
+        // Find if selected entry is already in the queue
+        const found = entries.find(item => {
+          return item.sys.id === result.sys.id
+        })
+
+        // Updata entries, otherwise, show error about duplicates
+        if (!found) {
+          setEntries(prevState => {
+            return [
+              ...prevState,
+              result
+            ]
+          })
+        } else {
+          setShowDuplicateMessage(true)
+        }
+      })
+  }
+
+  /**
+   * Use SDK to show slide in of referenced item and allow edits
+   * @param  {str} id [description]
+   */
+  const handleEditSelected = id => {
+
+    // ID required
+    if (!id) return
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // show editor dialog
+    sdk.navigator
+      .openEntry(
+        id,
+        { slideIn: { waitForClose: true } }
+      )
+      .then((result) => {
+        
+        // Drop if no result
+        if (!result) return
+
+        // Get location of edited entry
+        const index = entries.findIndex(item => {
+          return item.sys.id === result.entity.sys.id
+        })
+
+        // Create duplicate and update state
+        let tempArray = entries
+        tempArray[index] = result.entity
+        setEntries(tempArray)
+
+        // Force an update with delayed forced refresh
+        setTimeout(() => { forceRefresh(!refresh) }, 2000)
+
+      })
+  }
+
+  /**
+   * Remove referenced item and update state and value
+   * @param  {str} id [description]
+   */
+  const handleRemoveSelected = id => {
+
+    // ID required
+    if (!id) return
+
+    // Remove error messages
+    setShowDuplicateMessage(false)
+
+    // Create duplicate data of current before modifying state
+    const workingEntries = [ ...entries ]
+
+    // Get location of removed entry
+    const index = workingEntries.findIndex(item => {
+      return item.sys.id === id
+    })
+
+    // Create duplicate, extract entry from array and update state
+    let tempArray = workingEntries
+    if (index > -1) tempArray.splice(index, 1)
+    setEntries(tempArray)
+  }
+
+
+  /**
+   * Build display dynamic content items
+   */
+  const embeds = entries.map(entry => {
+
+    // Conditionally check for entry status
+    let status
+    switch (true) {
+      case !entry.sys.publishedVersion:
+        status = 'draft'
+        break
+      case !!entry.sys.publishedVersion && entry.sys.version >= entry.sys.publishedVersion + 2:
+        status = 'changed'
+        break
+      case !!entry.sys.archivedVersion:
+        status = 'archived'
+        break
+      default:
+        status = 'published'
+        break;
+    }
+
     return (
-      <Flex key={field.key} marginTop={margin}>
-        <TextField
-          value={data && data[field.key] ? data[field.key] : ''}
-          maxLength={255}
-          name={field.key}
-          id={field.key}
-          labelText={field.label}
-          helpText={field.helper}
-          required={field.required ? true : false}
-          onChange={event => updateValue(`${field.key}`, event.target.value)}
-        />
+      <Flex marginTop="spacingM" key={entry.sys.id}>
+        <Card style={{"width":"100%"}}>
+          <Flex justifyContent="space-between">
+            <Flex justifyContent="space-between" style={{'width': '100%', 'marginRight': '10px'}}>
+              <FormLabel>{entry.fields.title ? entry.fields.title[locale] : 'Untitled'}</FormLabel>
+              <Tag entityStatusType={status}>{status}</Tag>
+            </Flex>
+            <CardActions position="left">
+              <DropdownList>
+                <DropdownListItem onClick={() => handleEditSelected(entry.sys.id)}>Edit</DropdownListItem>
+                <DropdownListItem onClick={() => handleRemoveSelected(entry.sys.id)}>Remove</DropdownListItem>
+              </DropdownList>
+            </CardActions>
+          </Flex>
+          <Flex alignItems="flex-end" justifyContent="space-between">
+            <TextField
+              value={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : 'undefined'}
+              name="embed"
+              id="embed"
+              width="full"
+              textInputProps={{
+                disabled: true,
+              }}
+            />
+            <CopyButton
+              copyValue={entry.fields.slug ? `{{${entry.fields.slug[locale]}}}` : ''}
+              style={{"marginLeft":"10px"}} />            
+          </Flex>
+        </Card>
       </Flex>
     )
   })
 
-  /**
-   * Build simple error list item
-   * @param  {[str]} string
-   * */
-  const buildRequiredItem = string => {
-    return <>&bull; {string}<br/></>
-  }
-
-  /**
-   * Show list of required items to send campaign
-   */
-  const requirements = (
-    <Flex marginTop={margin}>
-      <ValidationMessage>
-        The following items are required to create a campaign before publishing:<br />
-        {data.listIds && data.listIds.length === 0 && buildRequiredItem('List Ids')}
-        {!data.templateId && buildRequiredItem('Template')}
-        {!data.name && buildRequiredItem('Campaign Name')}
-      </ValidationMessage>
-    </Flex>
-  )
-
-  /**
-   * Build list selection
-   */
-  const listSelect = (
-    <Flex marginTop={margin}>
-      <Lists
-        sdk={sdk}
-        initialValue={data.listIds}
-        updateValue={updateValue}
-        // appParameters={sdk.parameters.instance}
-      />
-    </Flex>
-  )
-
-  /**
-   * Build template selection
-   */
-  const templateSelect = (
-    <Flex marginTop={margin}>
-      <Template
-        sdk={sdk}
-        initialValue={data.templateId}
-        updateValue={updateValue}
-        appParameters={sdk.parameters.instance}
-      />
-    </Flex>
-  )
-
   return (
     <div className="app">
-      <Demo
-        sdk={sdk}
-        appParameters={sdk.parameters.instance}
-      />
-      {/* <Flex> */}
-      {/*   <Switch */}
-      {/*     id="sendEmail" */}
-      {/*     labelText="Setup Iterable Campaign?" */}
-      {/*     isChecked={setup} */}
-      {/*     onToggle={() => setSetup(!setup)} */}
-      {/*   /> */}
-      {/* </Flex> */}
-      {/* {setup && listSelect} */}
-      {/* {setup && templateSelect} */}
-      {/* {setup && simpleFields} */}
-      {/* {setup && !data.sendEmail ? requirements : null} */}
+      <Flex>
+        <HelpText>Create dynamic content embeds by adding snippets to this entry. Copy the bracketed tokens and paste into the main content area.</HelpText>
+      </Flex>
+      <Flex marginTop="spacingM">
+        <TextLink icon="Search" onClick={handleAddExisting}>Choose from exisiting</TextLink>
+        <Paragraph style={{"marginLeft": "10px", "marginRight": "10px"}}>– or -</Paragraph>
+        <TextLink icon="PlusCircle" onClick={handleAddNew}>Create new</TextLink>
+      </Flex>
+      <Flex marginTop="spacingM" flexDirection="column">
+        {showDuplicateMessage && <ValidationMessage>Cannot have duplicate choices.</ValidationMessage>}
+        {embeds}
+      </Flex>
     </div>
   );
 }
