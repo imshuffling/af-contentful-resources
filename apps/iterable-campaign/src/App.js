@@ -51,7 +51,7 @@ const App = ({ sdk }) => {
    */
   const margin = 'spacingM'
   const iterableObject = sdk.entry.fields.iterableObject && sdk.entry.fields.iterableObject.getValue() ? sdk.entry.fields.iterableObject.getValue() : initialState
-  const [setup, setSetup] = useState(false)
+  const [setup, setSetup] = useState(iterableObject.sendEmail)
   const [data, setData] = useState(iterableObject)
 
   /**
