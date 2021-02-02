@@ -24,12 +24,11 @@ const App = ({ sdk }) => {
   /**
    * Set state/constants
    */
-  const contentType = sdk.parameters.instance.dynamicContentType
+  const contentType = sdk.parameters.instance.dynamicContentType ? sdk.parameters.instance.dynamicContentType : 'dynamicContent'
   const locale = 'en-US'
   const [entries, setEntries] = useState([])
   const [showDuplicateMessage, setShowDuplicateMessage] = useState(false)
   const [refresh, forceRefresh] = useState(false)
-
 
   /**
    * On initial load, query entry for dynamic embeds and populate the field
@@ -135,7 +134,7 @@ const App = ({ sdk }) => {
     sdk.dialogs
       .selectSingleEntry({
         locale: locale,
-        contentType: contentType
+        contentTypes: contentType,
       })
       .then((result) => {
 
