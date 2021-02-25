@@ -1,5 +1,5 @@
 /**
- * Custom TinyMCE UI Extentsion (Optional) for Contentful
+ * Custom TinyMCE UI Extentsion for Contentful
  * Author: Agora Financial, LLC
  * Repo: https://github.com/tinymce/tinymce-contentful
  * TinyMCE Documentation: https://www.tiny.cloud/docs
@@ -9,18 +9,16 @@
 // Set default for CF SDK
 const locale = "en-US";
 
-window.contentfulExtension.init( initExtension );
-
 // Run CF SDK
-function initExtension( api ) {
-  api.window.startAutoResizer();
-
+window.contentfulExtension.init(function(api) {
+  
   /**
    * Init for TinyMCE
    * @param  {object} api
    * @return {null}
    */
   function tinymceForContentful(api) {
+    api.window.startAutoResizer();
 
     // Clean up TinyMCE default vars from CF
     function tweak(param) {
@@ -40,7 +38,10 @@ function initExtension( api ) {
 
     // TinyMCE Init
     tinymce.init({
-      selector: "#editor",
+      selector: '#editor',
+      extended_valid_elements: 'script[src|async|defer|type|charset]',
+      custom_elements: 'script',
+      content_css : "./editor.css",
       plugins: api.parameters.instance.plugins,
       toolbar: tb,
       menubar: mb,
@@ -50,17 +51,36 @@ function initExtension( api ) {
       resize: false,
       image_title: true,
       image_caption: true,
-      image_dimensions: false,
+      image_description: true,
+      image_dimensions: true,
       branding: false,
       content_style: 'img.alignleft { float: left; margin: 5px 20px 20px 0; } ' +
         'img.alignright { float: right; margin: 5px 0 20px 20px; } ' +
         'img.aligncenter, img.alignjustify { display: block; margin: 5px auto 20px auto; }',
       formats: {
-        alignleft: { selector: 'img', classes: 'alignleft' },
-        aligncenter: { selector: 'img', classes: 'aligncenter' },
-        alignright: { selector: 'img', classes: 'alignright' },
-        alignjustify: { selector: 'img', classes: 'alignjustify' },
+        alignleft: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignleft', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'left' } }
+        ],
+        aligncenter: [
+          { selector: 'img,table,ul,ol,div', classes: 'aligncenter', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'center' } }
+        ],
+        alignright: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignright', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'right' } }
+        ],
+        alignjustify: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignjustify', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'justify' } }
+        ]
       },
+      image_class_list: [
+        {title: 'None', value: ''},
+        {title: 'Align Left', value: 'alignleft'},
+        {title: 'Center', value: 'aligncenter'},
+        {title: 'Align Right', value: 'alignright'}
+      ],
       
       // Enable file browser
       file_picker_types: 'file image media',
@@ -267,30 +287,14 @@ function initExtension( api ) {
   var sub = location.host == "contentful.staging.tiny.cloud" ? "cloud-staging" : "cloud",
       apiKey = api.parameters.installation.apiKey,
       channel = api.parameters.installation.channel,
-      tinymceUrl = "https://" + sub + ".tinymce.com/" + channel + "/tinymce.min.js?apiKey=" + apiKey,
-      addButton = document.getElementById('add');
+      tinymceUrl = "https://" + sub + ".tinymce.com/" + channel + "/tinymce.min.js?apiKey=" + apiKey;
 
-  // Display content if it exisits
-  var currentValue = api.field.getValue();
-  if ( typeof currentValue !== 'undefined' ) {
-    showTinyMCE();
-  } else {
-    addButton.addEventListener('click', showTinyMCE);
-    addButton.style.display = 'block';
-  }
+  // Init
+  loadScript(tinymceUrl, function() {
+    tinymceForContentful(api);
+  });
 
-  /**
-   * Fire the init for TinyMCE and remove display buttons
-   * @return {null)
-   */
-  function showTinyMCE() {
-    addButton.parentNode.removeChild(addButton);
-    loadScript(tinymceUrl, function() {
-      tinymceForContentful(api);
-    });
-  }
-
-};
+});
 
 /**
  * Evaluate if object is empty

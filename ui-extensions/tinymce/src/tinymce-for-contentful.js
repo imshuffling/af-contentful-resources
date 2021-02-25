@@ -38,7 +38,10 @@ window.contentfulExtension.init(function(api) {
 
     // TinyMCE Init
     tinymce.init({
-      selector: "#editor",
+      selector: '#editor',
+      extended_valid_elements: 'script[src|async|defer|type|charset]',
+      custom_elements: 'script',
+      content_css : "./editor.css",
       plugins: api.parameters.instance.plugins,
       toolbar: tb,
       menubar: mb,
@@ -49,17 +52,35 @@ window.contentfulExtension.init(function(api) {
       image_title: true,
       image_caption: true,
       image_description: true,
-      image_dimensions: false,
+      image_dimensions: true,
       branding: false,
       content_style: 'img.alignleft { float: left; margin: 5px 20px 20px 0; } ' +
         'img.alignright { float: right; margin: 5px 0 20px 20px; } ' +
         'img.aligncenter, img.alignjustify { display: block; margin: 5px auto 20px auto; }',
       formats: {
-        alignleft: { selector: 'img', classes: 'alignleft' },
-        aligncenter: { selector: 'img', classes: 'aligncenter' },
-        alignright: { selector: 'img', classes: 'alignright' },
-        alignjustify: { selector: 'img', classes: 'alignjustify' },
+        alignleft: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignleft', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'left' } }
+        ],
+        aligncenter: [
+          { selector: 'img,table,ul,ol,div', classes: 'aligncenter', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'center' } }
+        ],
+        alignright: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignright', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'right' } }
+        ],
+        alignjustify: [
+          { selector: 'img,table,ul,ol,div', classes: 'alignjustify', exact: true },
+          { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,li', styles: { textAlign: 'justify' } }
+        ]
       },
+      image_class_list: [
+        {title: 'None', value: ''},
+        {title: 'Align Left', value: 'alignleft'},
+        {title: 'Center', value: 'aligncenter'},
+        {title: 'Align Right', value: 'alignright'}
+      ],
       
       // Enable file browser
       file_picker_types: 'file image media',
