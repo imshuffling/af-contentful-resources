@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Switch, TextField, Flex, ValidationMessage } from '@contentful/forma-36-react-components'
+import { Switch, TextField, Flex, ValidationMessage, Button } from '@contentful/forma-36-react-components'
 
 import Lists from './Lists'
 import Template from './Template'
@@ -175,6 +175,23 @@ const App = ({ sdk }) => {
     </Flex>
   )
 
+  /**
+   * Generated preview link
+   */
+  const preview = (
+    <Flex marginTop={margin}>
+      <Button
+        href={`${sdk.parameters.instance.emailPreviewUrl}/${data.templateId}/${sdk.ids.entry}`}
+        target="_blank"
+        style={{ width: '100%'}}
+        icon="Cycle"
+        disabled={setup && !data.sendEmail}
+      >
+        Generate email preview
+      </Button>
+    </Flex>
+  )
+
   return (
     <div className="app">
       <Flex>
@@ -189,6 +206,7 @@ const App = ({ sdk }) => {
       {setup && templateSelect}
       {setup && simpleFields}
       {setup && !data.sendEmail ? requirements : null}
+      {setup && preview}
     </div>
   );
 }

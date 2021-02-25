@@ -119,7 +119,7 @@ const Lists = ({ sdk, initialValue, updateValue, appParameters }) => {
   }
 
   /**
-   * When field entry changes, update the selected lits to find the first list name that includes the appropriate tag
+   * When field entry changes, update the selected lists to find the first list name that includes the appropriate tag
    * Tags are itemNumbers or listCodes depending on entry type
    * @param  {obj} value
    * @return {null}
@@ -144,14 +144,15 @@ const Lists = ({ sdk, initialValue, updateValue, appParameters }) => {
             break
         }
 
-        // Loop through templates and find first with an appropriate tag and skipping already added
-        for (let i = 0, len = lists.length; i < len; i++) {
-          if (!lists[i].name.includes(`[${code}]`)) continue
-          if (selectedItems.includes(lists[i].id)) continue
-          const array = [...selectedItems, lists[i].id]
-          updateValue(targetId, array)
-          setSelectedItems(array)
-          break
+        // Loop through templates and find first with an appropriate tag and skipping if already added
+        if (selectedItems.length < 1) {
+          for (let i = 0, len = lists.length; i < len; i++) {
+            if (!lists[i].name.includes(`[${code}]`)) continue
+            const array = [...selectedItems, lists[i].id]
+            updateValue(targetId, array)
+            setSelectedItems(array)
+            break
+          }
         }
 
       }).catch(error => {
