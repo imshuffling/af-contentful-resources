@@ -181,7 +181,7 @@ const App = ({ sdk }) => {
   const preview = (
     <Flex marginTop={margin}>
       <Button
-        href={`${sdk.parameters.instance.emailPreviewUrl}/${data.templateId}/${sdk.ids.entry}`}
+        href={`${sdk.parameters.instance.emailPreviewUrl}/preview?template=${data.templateId}&entry=${sdk.ids.entry}`}
         target="_blank"
         style={{ width: '100%'}}
         icon="Cycle"
