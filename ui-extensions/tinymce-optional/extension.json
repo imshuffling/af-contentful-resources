@@ -1,7 +1,7 @@
 {
   "id": "TinyMCE-optional",
   "name": "TinyMCE (Optional)",
-  "src": "https://af-contentful.s3.amazonaws.com/tinymce-optional/index.html",
+  "src": "https://d2j79rc34v3733.cloudfront.net/tinymce-optional/index.html",
   "fieldTypes": ["Text"],
   "parameters": {
     "installation": [
