@@ -1,0 +1,18 @@
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  border-left: 3px solid #ccc;
+  padding-left: 1rem;
+}
+
+.trade-group-heading {
+  padding: 1em 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #d3dce0;
+}
+
+.trade-group-heading:hover {
+  cursor: pointer;
+}
