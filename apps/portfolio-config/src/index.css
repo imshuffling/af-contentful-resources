@@ -10,9 +10,42 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #d3dce0;
+  border-top: 2px solid #d3dce0;
 }
 
 .trade-group-heading:hover {
+  cursor: pointer;
+}
+
+.config-table {
+  font-size: 12px;
+}
+
+.config-table * {
+  font-size: inherit !important;
+}
+
+.config-table td,
+.config-table th {
+  padding: .625rem .75rem;
+  vertical-align: middle;
+}
+
+.config-table th {
+  padding-top: .3125rem;
+  padding-bottom: .3125rem;
+}
+
+.config-table input {
+  padding: .3125rem .5rem;
+}
+
+.config-table select {
+  padding: .3125rem 1.625rem .3125rem .5rem;
+  height: 1.625rem;
+}
+
+.config-table .remove {
+  vertical-align: middle;
   cursor: pointer;
 }

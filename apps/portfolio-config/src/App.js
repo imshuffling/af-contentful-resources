@@ -1,28 +1,15 @@
 import { useState, useEffect } from 'react'
-import {
-  Switch,
-  TextField,
-  Flex,
-  FormLabel,
-  ValidationMessage,
-  Button,
-  Paragraph,
-  Select,
-  Option,
-  Accordion,
-  AccordionItem,
-  CopyButton,
-  Spinner,
-} from '@contentful/forma-36-react-components'
-
-// import Lists from './Lists'
-import TradeGroup from './TradeGroup'
+import { ValidationMessage, Spinner } from '@contentful/forma-36-react-components'
 import { formatPortfolioData } from './library/portfolio'
+
+import TradeGroup from './TradeGroup'
 
 const portfolioId = '13572'
 // const portfolioId = '13168'
 
-// Array of keys to remove from column configuraiton
+/**
+ * Array of keys to remove from column configurations
+ */
 const keysToRemove = [
   'Guid',
   'id',
@@ -39,28 +26,6 @@ const keysToRemove = [
   'ActionStatusXML'
 ]
 
-const type = [
-  'default',
-  'percent',
-  'currency',
-  'date'
-]
-
-const dateFormat = [
-  {
-    label: 'January 1, 1970',
-    value: 'F j, Y'
-  },
-  {
-    label: 'Jan 1, 1970',
-    value: ''
-  },
-  {
-    label: '01/01/1970',
-    value: ''
-  }
-]
-
 const App = ({ sdk }) => {
 
   /**
@@ -70,6 +35,7 @@ const App = ({ sdk }) => {
   const [showError, setShowError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(defaultErrorMessage)
   const [isProcessing, setIsProcessing] = useState(true)
+  const [config, setConfig] = useState()
 
   /**
    * Primary configuration data
@@ -91,8 +57,21 @@ const App = ({ sdk }) => {
           setShowError(true)
         } else {
 
-          // Generate default formatted portfolio to extracting trade groups
-          setTradeGroups(formatPortfolioData(data))
+          // Generate list of trade groups for configuraiton
+          const tradeGroupArray = [{ Id: 0, Name: 'Ungrouped' }]
+          for (let i = 0, len = data.length; i < len; i++) {
+
+            // Build if trade group data provided
+            if (data[i].TradeGroup.$id !== undefined && data[i].TradeGroup.Name) {
+                    
+              // Merge new trade group object into object
+              const newTradeGroup = { ...data[i].TradeGroup }
+
+              // Push to new array for state
+              tradeGroupArray.push(newTradeGroup)
+            }
+          }
+          setTradeGroups(tradeGroupArray)
           
           // Grab first position for primary/subtrade to build config options
           const positionSample = data[0]
@@ -133,9 +112,8 @@ const App = ({ sdk }) => {
   /**
    * Set state/constants
    */
-  // const  = sdk.entry.fields. && sdk.entry.fields..getValue() ? sdk.entry.fields..getValue() : initialState
-  // const [setup, setSetup] = useState(.sendEmail)
-  // const [data, setData] = useState()
+  // const config = sdk.entry.fields.config && sdk.entry.fields.config.getValue() ? sdk.entry.fields.config.getValue() : null
+  
 
   /**
    * Update field when data changes
@@ -152,8 +130,10 @@ const App = ({ sdk }) => {
    * @param  {str|arr} value
    * @return {null}
    */
-//   const updateValue = (key, value) => {
-//     setData( prevState => {
+  const updateConfig = (data) => {
+    console.log('OPEN', data[0].open);
+    // console.log('CLOSED', data[0].closed);
+    // setConfig( prevState => {
 //       let temp = {
 //         ...prevState,
 //         [key]: value
@@ -165,13 +145,13 @@ const App = ({ sdk }) => {
 //       } else {
 //         prevState = { ...prevState, "sendEmail": false }
 //       }
-// 
-//       return {
-//         ...prevState,
-//         [key]: value
-//        }
-//     })
-//   }
+
+    //   return {
+    //     ...prevState,
+    //     [key]: value
+    //    }
+    // })
+  }
 
   /**
    * Build list of trade groups
@@ -180,10 +160,11 @@ const App = ({ sdk }) => {
   for (const group of tradeGroups) {
       tradeGroupsList.push(
         <TradeGroup
-          key={group.config.tradeGroupId}
+          key={group.Id}
           group={group}
           positionKeys={positionKeys}
           subtradeKeys={subtradeKeys}
+          updateConfig={updateConfig}
         />
       )
   }

@@ -1,74 +1,114 @@
 import { useState, useEffect } from 'react'
-import {
-  Switch,
-  TextField,
-  Flex,
-  FormLabel,
-  ValidationMessage,
-  Button,
-  Paragraph,
-  Select,
-  Option,
-  Accordion,
-  AccordionItem,
-  CopyButton,
-  Subheading,
-  Icon
-} from '@contentful/forma-36-react-components'
+import { Subheading, Switch, Flex } from '@contentful/forma-36-react-components'
 
 import Config from './Config'
 
-const TradeGroup = ({ group, positionKeys, subtradeKeys }) => {
+const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
+
+  /**
+   * Initial data state
+   * @type {obj}
+   */
+  const initialState = {
+    "open": {},
+    "closed": {}
+  }
 
   /**
    * Set state/constants
    */
   const margin = 'spacingM'
-  const title = group.config.tradeGroupId > 0 ? group.config.portfolioHeader : 'Ungrouped'
   const [showOptions, setShowOptions] = useState(false)
+  const [showOpen, setShowOpen] = useState(false)
+  const [showClosed, setShowClosed] = useState(false)
+  const [groupConfigData, setGroupConfigData] = useState(initialState)
 
+  /**
+   * Update the combined trade group local state and main config
+   * @param  {obj} update
+   */
+  const updateTradeGroup = update => {
 
-//   const [includeCustomColumns, setIncludeCustomColumns] = useState(false)
-//   const [includeSubtrades, setIncludeSubtrades] = useState(false)
-//   const [includeCustomSubtradeColumns, setIncludeCustomSubtradeColumns] = useState(false)
-//   const [includeLinks, setIncludeLinks] = useState(true)
-// 
-// 
-// 
-//   const positionKeySelect = (
-//     <Select id="primaryKey" name="primaryKey">
-//       {positionKeys.map(element => {
-//         return (
-//           <Option value={element}>{element}</Option>
-//         )
-//       })}
-//     </Select>
-//   )
-// 
-//   const subtradeKeySelect = (
-//     <Select id="subtradeKey" name="subtradeKey">
-//       {subtradeKeys.map(element => {
-//         return (
-//           <Option value={element}>{element}</Option>
-//         )
-//       })}
-//     </Select>
-//   )
-// 
-//   const configOptions = (
-//     <>
-//       <Switch
-//         labelText='Include Custom Columns?'
-//         isChecked={includeCustomColumns}
-//         onToggle={setIncludeCustomColumns}
-//       />
-//       <Flex marginTop={margin}>
-//         {includeCustomColumns && positionKeySelect}
-//         {includeCustomColumns && subtradeKeySelect}
-//       </Flex>
-//     </>
-//   )
+    // Merge update and current state
+    const mergedConfig = {
+      ...groupConfigData,
+      ...update
+    }
 
+    // Update local state
+    setGroupConfigData(mergedConfig)
+
+    // Append merged to group Id for top level config
+    updateConfig({
+      [group.Id]: mergedConfig
+    })
+    
+  }
+
+  /**
+   * Update local state and config if making custom changes to those positions
+   * @param  {[type]} type [description]
+   * @return {[type]}      [description]
+   */
+  const handleToggleOptions = type => {
+    
+    // Toggle display
+    if (type === 'open') {
+      setShowOpen(!showOpen)
+      setGroupConfigData(prevState => {
+
+        // Toggle exclusiion from config generation
+        prevState[type].exclude = showOpen
+
+        // Update parent config
+        updateConfig({
+          [group.Id]: prevState
+        })
+        return prevState
+      })
+
+    // For closed  
+    } else {
+      setShowClosed(!showClosed)
+      setGroupConfigData(prevState => {
+
+        // Toggle exclusiion from config generation
+        prevState[type].exclude = showClosed
+
+        // Update parent config
+        updateConfig({
+          [group.Id]: prevState
+        })
+        return prevState
+      })
+    }
+  }
+
+  /**
+   * Open config toggle
+   */
+  const openConfig = (
+    <Flex marginBottom="spacingS">
+      <Switch
+        labelText="Open Positions"
+        isChecked={showOpen}
+        onToggle={() => handleToggleOptions('open')}
+      />
+    </Flex>
+  )
+
+  /**
+   * Closed config toggle
+   */
+  const closedConfig = (
+    <Flex paddingTop="spacingM" marginBottom="spacingM" style={{ borderTop: '1px dotted #d3dce0' }}>
+      <Switch
+        labelText="Closed Positions"
+        isChecked={showClosed}
+        onToggle={() => handleToggleOptions('closed')}
+      />
+    </Flex>
+  )
 
   return (
     <div className="trade-group">
@@ -77,51 +117,37 @@ const TradeGroup = ({ group, positionKeys, subtradeKeys }) => {
         onClick={() => setShowOptions(!showOptions)}
         style={{ display: 'flex' }}
       >
-        {title}
-        {/* <Icon */}
-        {/*   icon={showOptions ? "ArrowDown" : "ArrowUp"} */}
-        {/*   size="large" */}
-        {/* /> */}
+        {group.Name}
         <Switch
           labelText="Use Custom Config"
           isChecked={showOptions}
-          onToggle={setShowOptions}
+          onToggle={showOptions}
         />
       </Subheading>
-        {showOptions && <Config positionKeys={positionKeys} subtradeKeys={subtradeKeys} />}
+
+      {showOptions && openConfig}
+      {showOptions && showOpen ?
+        <Config
+          status="open"
+          positionKeys={positionKeys}
+          subtradeKeys={subtradeKeys}
+          updateTradeGroup={updateTradeGroup}
+        />
+        : null
+      }
+
+      {showOptions && closedConfig}
+      {showOptions && showClosed ?
+        <Config
+          status="closed"
+          positionKeys={positionKeys}
+          subtradeKeys={subtradeKeys}
+          updateTradeGroup={updateTradeGroup}
+        />
+        : null
+      }
     </div>
   )
 }
 
 export default TradeGroup
-
-// <Flex>
-//   <Flex>
-//     <Switch
-//       labelText='Include Custom Columns?'
-//       isChecked={includeCustomColumns}
-//       onToggle={setIncludeCustomColumns}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Subtrades?'
-//       isChecked={includeSubtrades}
-//       onToggle={setIncludeSubtrades}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Custom Subtrade Columns?'
-//       isChecked={includeCustomSubtradeColumns}
-//       onToggle={setIncludeCustomSubtradeColumns}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Links?'
-//       isChecked={includeLinks}
-//       onToggle={setIncludeLinks}
-//     />
-//   </Flex>
-// </Flex>

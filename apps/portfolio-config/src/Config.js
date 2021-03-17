@@ -1,178 +1,170 @@
 import { useState, useEffect } from 'react'
-import {
-  Switch,
-  TextField,
-  Flex,
-  FormLabel,
-  ValidationMessage,
-  Button,
-  Paragraph,
-  Select,
-  Option,
-  Accordion,
-  AccordionItem,
-  CopyButton,
-  Subheading,
-  Icon,
-  CheckboxField
-} from '@contentful/forma-36-react-components'
+import { Switch, Flex, CheckboxField, TextLink } from '@contentful/forma-36-react-components'
 
-const Config = ({ positionKeys, subtradeKeys  }) => {
+import ConfigTable from './ConfigTable'
+
+const Config = ({ status, positionKeys, subtradeKeys, updateTradeGroup }) => {
+
+  const fauxData = [
+    { 'key': '123' },
+    { 'key': 'abc' }
+  ]
 
   /**
-   * Set state/constants
+   * Display constants
    */
-  const margin = 'spacingM'
-  const marginClass = 'f36-margin-top--xs'
-  const marginClass2 = 'f36-margin-left--s'
-  // const title = group.config.tradeGroupId > 0 ? group.config.portfolioHeader : 'Ungrouped'
-  // const [showOptions, setShowOptions] = useState(false)
+  const checkboxClass = 'f36-margin-left--s'
+
+  /**
+   * View toggle state
+   */
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [showCustomSubtradeColumns, setShowCustomSubtradeColumns] = useState(false)
 
-
-  const [useCustomConfig, setUseCustomConfig] = useState(false)
+  /**
+   * Options state
+   */
   const [includeCustomColumns, setIncludeCustomColumns] = useState(false)
   const [includeSubtrades, setIncludeSubtrades] = useState(false)
   const [includeCustomSubtradeColumns, setIncludeCustomSubtradeColumns] = useState(false)
   const [includeLinks, setIncludeLinks] = useState(true)
+  const [statusConfigData, setStatusConfigData] = useState()
 
 
-  const positionKeySelect = (
-    <Select id="primaryKey" name="primaryKey">
-      {positionKeys.map(element => {
-        return (
-          <Option value={element}>{element}</Option>
-        )
-      })}
-    </Select>
+  const updateStatusConfig = update => {
+
+    // Merge update and current state
+    const mergedConfig = {
+      ...statusConfigData,
+      ...update
+    }
+
+    // Update local state
+    setStatusConfigData(mergedConfig)
+
+    // console.log('updateStatusConfig', mergedConfig);
+
+    // Append merged to group Id for top level config
+    updateTradeGroup({
+      [status]: mergedConfig
+    })
+    
+  }
+
+  // TODO
+  // Simple toggle updates
+  // useEffect(() => {
+  //   updateTradeGroup({
+  //     [status]: {
+  //       "enable": true,
+  //       "includeSubtrades": includeSubtrades,
+  //       "includeLinks": includeLinks,
+  //     }
+  //   })
+  // }, [includeLinks, includeSubtrades])
+
+
+
+
+  /**
+   * Primary position column configuration table
+   */
+  const positionConfigTable = (
+    <Flex marginTop="spacingXs">
+      <ConfigTable
+        type="columns"
+        keys={positionKeys}
+        data={fauxData}
+        updateStatusConfig={updateStatusConfig}
+      />
+    </Flex>
   )
 
-  const subtradeKeySelect = (
-    <Select id="subtradeKey" name="subtradeKey">
-      {subtradeKeys.map(element => {
-        return (
-          <Option value={element}>{element}</Option>
-        )
-      })}
-    </Select>
+  /**
+   * Subtrade column configuration table
+   */
+  const subtradeConfigTable = (
+    <Flex marginTop="spacingXs">
+      <ConfigTable
+        type="subtrades"
+        keys={subtradeKeys}
+        data={fauxData}
+        updateStatusConfig={updateStatusConfig}
+      />
+    </Flex>
   )
 
-  const configOptions = (
-    <>
-      <Flex justifyContent="space-between">
+  return (
+    <div className="trade-group f36-padding-bottom--m">
+      <Flex justifyContent="space-between" marginBottom="spacingL">
         <CheckboxField
           labelText="Include Links"
           id="includeLinks"
           checked={includeLinks}
           value={true}
-          onChange={() => setIncludeLinks(!includeLinks)}
+          onChange={() => {
+            setIncludeLinks(!includeLinks)
+            updateStatusConfig({ includeLinks: !includeLinks })
+          }}
         />
         <CheckboxField
           labelText="Custom Columns"
           id="includeCustomColumns"
+          className={checkboxClass}
           checked={includeCustomColumns}
           value={true}
-          onChange={() => setIncludeCustomColumns(!includeCustomColumns)}
-          className={marginClass2}
+          onChange={() => setIncludeCustomColumns(!includeCustomColumns)}          
         />
         <CheckboxField
           labelText="Include Subtrades"
           id="includeSubtrades"
+          className={checkboxClass}
           checked={includeSubtrades}
           value={true}
           onChange={() => setIncludeSubtrades(!includeSubtrades)}
-          className={marginClass2}
+          onChange={() => {
+            setIncludeSubtrades(!includeSubtrades)
+            updateStatusConfig({ includeSubtrades: !includeSubtrades })
+          }}          
         />
         <CheckboxField
           labelText="Custom Subtrade Columns"
           id="includeCustomSubtradeColumns"
+          className={checkboxClass}
           checked={includeCustomSubtradeColumns && includeSubtrades ? true : false}
           disabled={!includeSubtrades ? true : false}
           value={true}
-          onChange={() => setIncludeCustomSubtradeColumns(!includeCustomSubtradeColumns)}
-          className={marginClass2}
+          onChange={() => setIncludeCustomSubtradeColumns(!includeCustomSubtradeColumns)}          
         />
       </Flex>
-      {/* <Switch */}
-      {/*   labelText="Include Links?" */}
-      {/*   isChecked={includeLinks} */}
-      {/*   onToggle={setIncludeLinks} */}
-      {/*   className={marginClass} */}
-      {/* /> */}
-      <Switch
-        labelText="Configure Columns"
-        isChecked={includeCustomColumns && showCustomColumns ? true : false}
-        onToggle={setShowCustomColumns}
-        isDisabled={!includeCustomColumns ? true : false}
-        className={marginClass}
-      />
-      {includeCustomColumns && showCustomColumns && 'Column Config Rows'}
-      {/* <Flex marginTop={margin}> */}
-      {/*   {includeCustomColumns && positionKeySelect} */}
-      {/*   {includeCustomColumns && subtradeKeySelect} */}
-      {/* </Flex> */}
-      {/* <Switch */}
-      {/*   labelText="Include Subtrades" */}
-      {/*   isChecked={includeSubtrades} */}
-      {/*   onToggle={setIncludeSubtrades} */}
-      {/*   className={marginClass} */}
-      {/* /> */}
-      <Switch
-       labelText="Configure Subtrade Columns"
-       isChecked={showCustomSubtradeColumns}
-       isChecked={includeCustomSubtradeColumns && showCustomSubtradeColumns ? true : false}
-       onToggle={setShowCustomSubtradeColumns}
-       isDisabled={!includeCustomSubtradeColumns ? true : false}
-       className={marginClass}
-     />
-     {includeCustomSubtradeColumns && showCustomSubtradeColumns && 'Column Subtrade Config Rows'}
-    </>
-  )
 
+      <Flex justifyContent="space-between" alignItems="center" marginTop="spacingM">
+        <Switch
+          labelText="Configure Columns"
+          isChecked={includeCustomColumns && showCustomColumns ? true : false}
+          onToggle={setShowCustomColumns}
+          isDisabled={!includeCustomColumns ? true : false}
+        />
+        {includeCustomColumns && showCustomColumns ? <TextLink icon="Plus">Add Row</TextLink> : null }
+      </Flex>
 
-  return (
-    <div className="trade-group">
-      {/* <Switch */}
-      {/*   labelText='Use Custom Config?' */}
-      {/*   isChecked={useCustomConfig} */}
-      {/*   onToggle={setUseCustomConfig} */}
-      {/* /> */}
-      {/* {useCustomConfig && configOptions} */}
-      {configOptions}
+      {includeCustomColumns && showCustomColumns ? positionConfigTable : null }
+
+      <Flex justifyContent="space-between" alignItems="center" marginTop="spacingM">
+        <Switch
+         labelText="Configure Subtrade Columns"
+         isChecked={showCustomSubtradeColumns}
+         isChecked={includeCustomSubtradeColumns && showCustomSubtradeColumns ? true : false}
+         onToggle={setShowCustomSubtradeColumns}
+         isDisabled={!includeCustomSubtradeColumns ? true : false}
+       />
+       {includeCustomSubtradeColumns && showCustomSubtradeColumns ? <TextLink icon="Plus">Add Row</TextLink> : null }
+     </Flex>
+
+     {includeCustomSubtradeColumns && showCustomSubtradeColumns ? subtradeConfigTable : null }
+
     </div>
   )
 }
 
 export default Config
-
-// <Flex>
-//   <Flex>
-//     <Switch
-//       labelText='Include Custom Columns?'
-//       isChecked={includeCustomColumns}
-//       onToggle={setIncludeCustomColumns}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Subtrades?'
-//       isChecked={includeSubtrades}
-//       onToggle={setIncludeSubtrades}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Custom Subtrade Columns?'
-//       isChecked={includeCustomSubtradeColumns}
-//       onToggle={setIncludeCustomSubtradeColumns}
-//     />
-//   </Flex>
-//   <Flex marginLeft={margin}>
-//     <Switch
-//       labelText='Include Links?'
-//       isChecked={includeLinks}
-//       onToggle={setIncludeLinks}
-//     />
-//   </Flex>
-// </Flex>
