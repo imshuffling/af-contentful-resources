@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import App from './App'
-import { init, locations } from '@contentful/ui-extensions-sdk'
+import { init, locations } from '@contentful/app-sdk'
 
 import './index.css'
 import '@contentful/forma-36-react-components/dist/styles.css'
@@ -33,4 +33,4 @@ init((sdk) => {
   } else {
     return null
   }
-});
+})

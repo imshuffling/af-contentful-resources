@@ -208,7 +208,7 @@ const App = ({ sdk }) => {
       {setup && !data.sendEmail ? requirements : null}
       {setup && preview}
     </div>
-  );
+  )
 }
 
 export default App
