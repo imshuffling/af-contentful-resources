@@ -33,4 +33,4 @@ init((sdk) => {
   } else {
     return null
   }
-});
+})

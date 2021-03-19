@@ -17,8 +17,6 @@ import {
   HelpText
 } from '@contentful/forma-36-react-components'
 
-// import Demo from './Demo'
-
 const App = ({ sdk }) => {
 
   /**
