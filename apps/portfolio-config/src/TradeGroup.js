@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Subheading, Switch, Checkbox, Flex } from '@contentful/forma-36-react-components'
+import { Subheading, Tag, Switch, TextLink, Checkbox, Flex, ModalConfirm } from '@contentful/forma-36-react-components'
 
 import Config from './Config'
 
@@ -11,9 +11,18 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
   const margin = 'spacingM'
   const [isVisible, setIsVisible] = useState(true)
   const [showOptions, setShowOptions] = useState(false)
-  const [showOpen, setShowOpen] = useState(false)
-  const [showClosed, setShowClosed] = useState(false)
+  const [showOpen, setShowOpen] = useState(data && data.open ? true : false)
+  const [isEnabled, setIsEnabled] = useState(Object.keys(data).length > 0 ? true : false)
+  const [showClosed, setShowClosed] = useState(data && data.closed ? true : false)
   const [groupConfigData, setGroupConfigData] = useState({})
+  const [showModal, setShowModal] = useState(false);
+
+  /**
+   * Check SDK fields for data
+   */
+  useEffect(() => {
+    setIsEnabled(Object.keys(data).length > 0 ? true : false)
+  }, [data])
 
   /**
    * Update the combined trade group local state and main config
@@ -32,10 +41,48 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
   }
 
   /**
+   * Clear entire config for this trade group
+   */
+  const handleClearSettings = () => {
+    updateConfig(group.Id, {})
+  }
+
+  /**
+   * Clear settings
+   */
+  const clearSettings = (
+    <>
+      <TextLink
+        linkType="negative"
+        onClick={() => setShowModal(true)}
+        style={{ fontSize: '.75rem', textAlign: 'right' }}
+      >
+        [Clear All Settings]
+      </TextLink>
+      <ModalConfirm
+        isShown={showModal}
+        intent="negative"
+        title="Clear All Settings"
+        onClose={() => setShowModal(false)}
+        onCancel={() => setShowModal(false)}
+        onConfirm={() => {
+          setShowModal(false)
+          handleClearSettings()
+        }}
+      >
+        Are you sure you want to clear all settings for this group?
+      </ModalConfirm>
+    </>
+  )
+
+  /**
    * Open config toggle
    */
   const openConfig = (
-    <Flex marginBottom="spacingS">
+    <Flex
+      justifyContent="space-between"
+      marginBottom="spacingS"
+    >
       <Switch
         labelText="Open Positions"
         isChecked={showOpen}
@@ -48,7 +95,12 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
    * Closed config toggle
    */
   const closedConfig = (
-    <Flex paddingTop="spacingM" marginBottom="spacingM" style={{ borderTop: '1px dotted #d3dce0' }}>
+    <Flex
+      justifyContent="space-between"
+      paddingTop="spacingM"
+      marginBottom="spacingM"
+      style={{ borderTop: '1px dotted #d3dce0' }}
+    >
       <Switch
         labelText="Closed Positions"
         isChecked={showClosed}
@@ -65,12 +117,22 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
         style={{ display: 'flex' }}
       >
         {group.Name}
-        <Switch
-          labelText="Use Custom Config"
-          isChecked={showOptions}
-          onToggle={showOptions}
-        />
+        <Flex>
+          <Tag
+            tagType={isEnabled ? 'positive' : 'secondary'}
+          >
+            {isEnabled ? 'Enabled' : 'Unset'}
+          </Tag>
+          <Switch
+            labelText="Show Custom Config"
+            isChecked={showOptions}
+            onToggle={showOptions}
+            className="f36-margin-left--s trade-group__toggle"
+          />
+        </Flex>
       </Subheading>
+
+      {showOptions && clearSettings}
 
       {showOptions && openConfig}
       {showOptions && showOpen ?

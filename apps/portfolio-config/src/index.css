@@ -1,8 +1,5 @@
 .app {
-  max-width: 720px;
-  margin: 0 auto;
-  border-left: 3px solid #ccc;
-  padding-left: 1rem;
+  padding: 2rem;
 }
 
 .trade-group {
@@ -15,8 +12,13 @@
 .trade-group {
   border-top: 2px solid #d3dce0;
 }
+
+.trade-group:last-child {
+  border-bottom: 2px solid #d3dce0;
+}
+
 .trade-group:nth-child(even) {
-  background: #f9f9f9;
+  background: #f3f3f3;
 }
 
 .trade-group-heading {
@@ -28,6 +30,18 @@
 
 .trade-group-heading:hover {
   cursor: pointer;
+}
+
+.trade-group__toggle label {
+  margin-bottom: 0;
+}
+
+.trade-group__config {
+  margin-left: 3rem;
+  padding-left: 1.5rem;
+  padding-bottom: 1rem;
+  border-left: 1px solid #d3dce0;
+  border-bottom: 1px solid #d3dce0;
 }
 
 .config-table {

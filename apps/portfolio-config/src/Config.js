@@ -14,38 +14,58 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
   /**
    * View toggle state
    */
-  const [showCustomColumns, setShowCustomColumns] = useState(data && data.showCustomColumns ? true : false)
-  const [showCustomSubtradeColumns, setShowCustomSubtradeColumns] = useState(data && data.showCustomSubtradeColumns ? true : false)
+  const [showCustomColumns, setShowCustomColumns] = useState(data.showCustomColumns && data.showCustomColumns === true ? true : false)
+  const [showCustomSubtradeColumns, setShowCustomSubtradeColumns] = useState(data.showCustomSubtradeColumns && data.showCustomSubtradeColumns === true ? true : false)
 
   /**
    * Options state
    */
-  const [includeCustomColumns, setIncludeCustomColumns] = useState(data && data.includeCustomColumns ? true : false)
-  const [includeSubtrades, setIncludeSubtrades] = useState(data && data.includeSubtrades ? true : false)
-  const [includeCustomSubtradeColumns, setIncludeCustomSubtradeColumns] = useState(data && data.includeCustomColumns ? true : false)
-  const [includeLinks, setIncludeLinks] = useState(data && data.includeLinks ? true : false)
-  const [statusConfigData, setStatusConfigData] = useState(data && data)
+  const [includeCustomColumns, setIncludeCustomColumns] = useState(data.includeCustomColumns && data.includeCustomColumns === true ? true : false)
+  const [includeSubtrades, setIncludeSubtrades] = useState(data.includeSubtrades && data.includeSubtrades === true ? true : false)
+  const [includeCustomSubtradeColumns, setIncludeCustomSubtradeColumns] = useState(data.includeCustomColumns && data.includeCustomColumns === true ? true : false)
+  const [includeLinks, setIncludeLinks] = useState(data.includeLinks && data.includeLinks === true ? true : false)
+  const [statusConfigData, setStatusConfigData] = useState(data)
+
+  /**
+   * Reset data options on clear
+   */
+  useEffect(() => {
+    if (Object.keys(data).length === 0) {
+      setShowCustomColumns(false)
+      setShowCustomSubtradeColumns(false)
+      setIncludeCustomColumns(false)
+      setIncludeSubtrades(false)
+      setIncludeCustomSubtradeColumns(false)
+      setIncludeLinks(false)
+    }
+  }, [data])
 
   /**
    * Pass through to imitate form submit and grab all rows of fields
    */
   const updateStatusConfig = update => {
 
-    // Set up column type
+    // Set data/local state for merge
     const columns = 'columns' in update ? update : null 
     const subtrades = 'subtrades' in update ? update : null
+    const includeSubtradesUpdate = 'includeSubtrades' in update ? update : null
+    const includeLinksUpdate = 'includeLinks' in update ? update : null
+    const includeCustomColumnsUpdate = 'includeCustomColumns' in update ? update : null
+    const includeCustomSubtradeColumnsUpdate = 'includeCustomSubtradeColumns' in update ? update : null
+    const showCustomColumnsUpdate = 'showCustomColumns' in update ? update : null
+    const showCustomSubtradeColumnsUpdate = 'showCustomSubtradeColumns' in update ? update : null
 
     // Merge data
     const mergedConfig = {
       ...statusConfigData,
       ...columns,
       ...subtrades,
-      includeSubtrades,
-      includeLinks,
-      includeCustomColumns,
-      includeCustomSubtradeColumns,
-      showCustomColumns,
-      showCustomSubtradeColumns
+      ...includeSubtradesUpdate,
+      ...includeLinksUpdate,
+      ...includeCustomColumnsUpdate,
+      ...includeCustomSubtradeColumnsUpdate,
+      ...showCustomColumnsUpdate,
+      ...showCustomSubtradeColumnsUpdate
     }
 
     // Update local and parent state
@@ -114,8 +134,8 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
   )
 
   return (
-    <div className="trade-group__config f36-padding-bottom--m">
-      <Flex justifyContent="space-between" marginBottom="spacingL">
+    <div className="trade-group__config f36-margin-bottom--l">
+      <Flex justifyContent="space-between" marginBottom="spacingS">
         <div>
           <Checkbox
             id="includeLinks"
@@ -181,7 +201,7 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
           <TextLink
             icon="Plus"
             onClick={() => handleAddRow('columns')}
-            // disabled={true}
+
           >
             Add Row
           </TextLink>
@@ -205,7 +225,6 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
         <TextLink
           icon="Plus"
           onClick={() => handleAddRow('subtrades')}
-          // disabled={true}
         >
           Add Row
         </TextLink>

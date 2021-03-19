@@ -3,12 +3,6 @@ import { ValidationMessage, Spinner } from '@contentful/forma-36-react-component
 
 import TradeGroup from './TradeGroup'
 
-// const portfolioId = '13572'
-// const portfolioId = '13168'
-
-// const initialState = {}
-// const initialState = {"custom":{"0":{"open":{"defaultSort":"Text3","defaultDirection":"desc","columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Description"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CurrentClosePrice","label":"Current Price","type":"currency"},{"name":"Text3","label":"Income","type":"currency"}]},"closed":{"defaultSort":"Text3","defaultDirection":"desc","columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"},{"name":"Text3","label":"Net Income","type":"currency"}]}},"10736":{"open":{"defaultSort":"CurrentClosePrice","defaultDirection":"desc","includeSubtrades":true,"columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CurrentClosePrice","label":"Current Price","type":"currency"}],"subtrades":[{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"Text3","label":"Income"}]},"closed":{"includeSubtrades":true,"columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"}],"subtrades":[{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"},{"name":"CurrentClosePrice","label":"Exit Price","type":"currency"},{"name":"Text3","label":"Income"}]}}}}
-
 /**
  * Array of keys to remove from column configurations
  */
@@ -30,7 +24,13 @@ const keysToRemove = [
 
 const App = ({ sdk }) => {
 
-  // const initialState = initialState && initialState.custom
+  /**
+   * Data from SDK/Contentful
+   */
+  const initialState = sdk.entry.fields.config && sdk.entry.fields.config.getValue() ? sdk.entry.fields.config.getValue() : null
+  const [config, setConfig] = useState(initialState && initialState.custom)
+  const [portfolioId, setPortfolioId] = useState(sdk.entry.fields.portfolioId && sdk.entry.fields.portfolioId.getValue() ? sdk.entry.fields.portfolioId.getValue() : null)
+  const appParameters = sdk.parameters.instance ? sdk.parameters.instance : null
 
   /**
    * Set default vars/state for data retrieval
@@ -38,10 +38,7 @@ const App = ({ sdk }) => {
   const defaultErrorMessage = 'There was an error retrieving the porfolio data.'
   const [showError, setShowError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(defaultErrorMessage)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [portfolioId, setPortfolioId] = useState('13572')
-  // const [portfolioId, setPortfolioId] = useState()
-  const [config, setConfig] = useState()
+  const [isProcessing, setIsProcessing] = useState(false)  
 
   /**
    * Primary configuration data
@@ -50,14 +47,19 @@ const App = ({ sdk }) => {
   const [subtradeKeys, setSubtradeKeys] = useState([])
   const [tradeGroups, setTradeGroups] = useState([])
 
+  /**
+   * Make updates on field changes
+   */
+  const valueChangeHandler = value => {
+    setPortfolioId(sdk.entry.fields.portfolioId && sdk.entry.fields.portfolioId.getValue() ? sdk.entry.fields.portfolioId.getValue() : null)
+  }
 
+  /**
+   * Add listener for SDK field changes
+   */
   useEffect(() => {
-    console.log('Use SDK to get portfolioID here, with SKD watcher for changes');
-  }, [])
-
-  useEffect(() => {
-    console.log('Use SDK to get initial state from field');
-  }, [])
+    sdk.entry.fields.portfolioId.onValueChanged(valueChangeHandler);
+  }, []);
 
   /**
    * Make call to endpoint to get configuration data
@@ -69,9 +71,10 @@ const App = ({ sdk }) => {
 
     // Show loading
     setIsProcessing(true)
+    setShowError(false)
 
     // Get portfolio data
-    fetchData(``)
+    fetchData(`${appParameters.portfolioApiUrl}?access_token=${appParameters.portfolioApiKey}&id=${portfolioId}`)
       .then(data => {
 
         // Handle missing/incorrect data
@@ -148,6 +151,14 @@ const App = ({ sdk }) => {
 
     // Not pretty, but this loops through all of the data rows and make sure empty ones are stripped
     for (const [key, value] of Object.entries(compiledConfig)) {
+
+      // If entire tradegroup is empty, remove completely
+      if (Object.keys(compiledConfig[key]).length === 0) {
+        delete compiledConfig[key]
+        continue
+      }
+
+      // Start loopin'
       for (const obj of objectsToClean) {
         for (const [k, v] of Object.entries(obj)) {
           if (compiledConfig[key][k]) {
@@ -161,13 +172,17 @@ const App = ({ sdk }) => {
       }
     }
 
-    // Use SDK to update adjacent fields
-    const forContentful = { custom: compiledConfig }
+    // Use SDK to update fields with a debounce to accomodate state updates
+    const update = setTimeout(() => {
+      const field = sdk.entry.fields.config
+      if (Object.keys(compiledConfig).length > 0) {
+        field.setValue({ custom: compiledConfig })
+      } else {
+        field.setValue()
+      }
+    }, 1000);
+    return () => clearTimeout(update)
 
-
-    // const field = sdk.entry.fields.
-    // field.setValue(data)
-    // format and cleanup
   }, [config])
 
   /**
@@ -204,7 +219,7 @@ const App = ({ sdk }) => {
 
   return (
     <div className="app">
-      {tradeGroupsList}
+      {portfolioId && !showError ? tradeGroupsList : null}
       {isProcessing && <Spinner size="large" />}
       {showError && <ValidationMessage>{defaultErrorMessage}</ValidationMessage>}
       {!portfolioId && <ValidationMessage>Portfolio Id Required</ValidationMessage>}
