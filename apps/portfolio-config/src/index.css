@@ -5,12 +5,25 @@
   padding-left: 1rem;
 }
 
+.trade-group {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.trade-group {
+  border-top: 2px solid #d3dce0;
+}
+.trade-group:nth-child(even) {
+  background: #f9f9f9;
+}
+
 .trade-group-heading {
   padding: 1em 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 2px solid #d3dce0;
 }
 
 .trade-group-heading:hover {
@@ -19,6 +32,7 @@
 
 .config-table {
   font-size: 12px;
+  background: #fff;
 }
 
 .config-table * {
@@ -34,6 +48,7 @@
 .config-table th {
   padding-top: .3125rem;
   padding-bottom: .3125rem;
+  white-space: nowrap;
 }
 
 .config-table input {
@@ -41,8 +56,12 @@
 }
 
 .config-table select {
-  padding: .3125rem 1.625rem .3125rem .5rem;
+  padding: .3125rem 1rem .3125rem .5rem;
   height: 1.625rem;
+}
+
+.config-table select + svg {
+  right: .125em;
 }
 
 .config-table .remove {

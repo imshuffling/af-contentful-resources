@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { ValidationMessage, Spinner } from '@contentful/forma-36-react-components'
-import { formatPortfolioData } from './library/portfolio'
 
 import TradeGroup from './TradeGroup'
 
-const portfolioId = '13572'
+// const portfolioId = '13572'
 // const portfolioId = '13168'
+
+// const initialState = {}
+// const initialState = {"custom":{"0":{"open":{"defaultSort":"Text3","defaultDirection":"desc","columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Description"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CurrentClosePrice","label":"Current Price","type":"currency"},{"name":"Text3","label":"Income","type":"currency"}]},"closed":{"defaultSort":"Text3","defaultDirection":"desc","columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"},{"name":"Text3","label":"Net Income","type":"currency"}]}},"10736":{"open":{"defaultSort":"CurrentClosePrice","defaultDirection":"desc","includeSubtrades":true,"columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CurrentClosePrice","label":"Current Price","type":"currency"}],"subtrades":[{"name":"Text1","label":"Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"Text3","label":"Income"}]},"closed":{"includeSubtrades":true,"columns":[{"name":"Name","label":"Company"},{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"}],"subtrades":[{"name":"Text1","label":"Original Action"},{"name":"Weight","label":"Qty"},{"name":"Text2","label":"Notes"},{"name":"Symbol","label":"Symbol"},{"name":"OpenDate","label":"Entry Date","type":"date","format":"F j, Y"},{"name":"OpenPrice","label":"Entry Price","type":"currency"},{"name":"CloseDate","label":"Close Date","type":"date","format":"F j, Y"},{"name":"CurrentClosePrice","label":"Exit Price","type":"currency"},{"name":"Text3","label":"Income"}]}}}}
 
 /**
  * Array of keys to remove from column configurations
@@ -28,13 +30,17 @@ const keysToRemove = [
 
 const App = ({ sdk }) => {
 
+  // const initialState = initialState && initialState.custom
+
   /**
    * Set default vars/state for data retrieval
    */
   const defaultErrorMessage = 'There was an error retrieving the porfolio data.'
   const [showError, setShowError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(defaultErrorMessage)
-  const [isProcessing, setIsProcessing] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [portfolioId, setPortfolioId] = useState('13572')
+  // const [portfolioId, setPortfolioId] = useState()
   const [config, setConfig] = useState()
 
   /**
@@ -44,11 +50,28 @@ const App = ({ sdk }) => {
   const [subtradeKeys, setSubtradeKeys] = useState([])
   const [tradeGroups, setTradeGroups] = useState([])
 
+
+  useEffect(() => {
+    console.log('Use SDK to get portfolioID here, with SKD watcher for changes');
+  }, [])
+
+  useEffect(() => {
+    console.log('Use SDK to get initial state from field');
+  }, [])
+
   /**
    * Make call to endpoint to get configuration data
    */
   useEffect(() => {
-    fetchData(`https://wiggum.agorafinancial.com/api/tfrsites/portfolio/?access_token=2B78LaqgE4pc7rar&id=${portfolioId}`)
+
+    // Portfolio ID required
+    if (!portfolioId) return
+
+    // Show loading
+    setIsProcessing(true)
+
+    // Get portfolio data
+    fetchData(``)
       .then(data => {
 
         // Handle missing/incorrect data
@@ -107,50 +130,55 @@ const App = ({ sdk }) => {
       .then(() => {
         setIsProcessing(false)
       })
-  }, [])
+  }, [portfolioId])
 
   /**
-   * Set state/constants
+   * Update complete config when data changes and update Contentful
    */
-  // const config = sdk.entry.fields.config && sdk.entry.fields.config.getValue() ? sdk.entry.fields.config.getValue() : null
-  
+  useEffect(() => {
+
+    // Final compiled config for Contentful fields
+    const compiledConfig = { ...config }
+
+    // Keys to chec
+    const objectsToClean = [
+      { open: ['columns', 'subtrades'] }, 
+      { closed: ['columns', 'subtrades'] } 
+    ]
+
+    // Not pretty, but this loops through all of the data rows and make sure empty ones are stripped
+    for (const [key, value] of Object.entries(compiledConfig)) {
+      for (const obj of objectsToClean) {
+        for (const [k, v] of Object.entries(obj)) {
+          if (compiledConfig[key][k]) {
+            for (const type of v) {
+              if (compiledConfig[key][k][type] && compiledConfig[key][k][type].length > 0 ) {
+                compiledConfig[key][k][type] = compiledConfig[key][k][type].filter(row => row.name)
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Use SDK to update adjacent fields
+    const forContentful = { custom: compiledConfig }
+
+
+    // const field = sdk.entry.fields.
+    // field.setValue(data)
+    // format and cleanup
+  }, [config])
 
   /**
-   * Update field when data changes
+   * Update main data state by merging with incoming update
+   * @param  {id} str
+   * @param  {obj} value
    */
-  // useEffect(() => {
-  //   const field = sdk.entry.fields.
-  //   field.setValue(data)
-  // }, [data])
-
-  /**
-   * Update main data object, pass as callback to components
-   * Check if all parameters are checked to allow campaign creation
-   * @param  {str} key
-   * @param  {str|arr} value
-   * @return {null}
-   */
-  const updateConfig = (data) => {
-    console.log('OPEN', data[0].open);
-    // console.log('CLOSED', data[0].closed);
-    // setConfig( prevState => {
-//       let temp = {
-//         ...prevState,
-//         [key]: value
-//       }
-// 
-//       // Check for requires and verify if OK to create campaign
-//       if (setup && temp.templateId > 0 && temp.listIds.length > 0 && temp.name) {
-//         prevState = { ...prevState, "sendEmail": true }
-//       } else {
-//         prevState = { ...prevState, "sendEmail": false }
-//       }
-
-    //   return {
-    //     ...prevState,
-    //     [key]: value
-    //    }
-    // })
+  const updateConfig = (id, update) => {
+    const updatedConfig = { ...config }
+    updatedConfig[id] = update
+    setConfig(updatedConfig)
   }
 
   /**
@@ -158,15 +186,20 @@ const App = ({ sdk }) => {
    */
   const tradeGroupsList = []
   for (const group of tradeGroups) {
-      tradeGroupsList.push(
-        <TradeGroup
-          key={group.Id}
-          group={group}
-          positionKeys={positionKeys}
-          subtradeKeys={subtradeKeys}
-          updateConfig={updateConfig}
-        />
-      )
+
+    // TODO
+    const data = config && config[group.Id] ? config[group.Id] : {}
+
+    tradeGroupsList.push(
+      <TradeGroup
+        key={group.Id}
+        data={data}
+        group={group}
+        positionKeys={positionKeys}
+        subtradeKeys={subtradeKeys}
+        updateConfig={updateConfig}
+      />
+    )
   }
 
   return (
@@ -174,6 +207,7 @@ const App = ({ sdk }) => {
       {tradeGroupsList}
       {isProcessing && <Spinner size="large" />}
       {showError && <ValidationMessage>{defaultErrorMessage}</ValidationMessage>}
+      {!portfolioId && <ValidationMessage>Portfolio Id Required</ValidationMessage>}
     </div>
   )
 }

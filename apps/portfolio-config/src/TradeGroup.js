@@ -1,87 +1,34 @@
 import { useState, useEffect } from 'react'
-import { Subheading, Switch, Flex } from '@contentful/forma-36-react-components'
+import { Subheading, Switch, Checkbox, Flex } from '@contentful/forma-36-react-components'
 
 import Config from './Config'
 
-const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
-
-  /**
-   * Initial data state
-   * @type {obj}
-   */
-  const initialState = {
-    "open": {},
-    "closed": {}
-  }
+const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) => {
 
   /**
    * Set state/constants
    */
   const margin = 'spacingM'
+  const [isVisible, setIsVisible] = useState(true)
   const [showOptions, setShowOptions] = useState(false)
   const [showOpen, setShowOpen] = useState(false)
   const [showClosed, setShowClosed] = useState(false)
-  const [groupConfigData, setGroupConfigData] = useState(initialState)
+  const [groupConfigData, setGroupConfigData] = useState({})
 
   /**
    * Update the combined trade group local state and main config
+   * @param  {int} status
    * @param  {obj} update
    */
-  const updateTradeGroup = update => {
+  const updateTradeGroup = (status, update) => {
 
-    // Merge update and current state
-    const mergedConfig = {
-      ...groupConfigData,
-      ...update
-    }
+    // Create a clone of the current state and update the data by status (open/closed)
+    const updatedConfig = { ...groupConfigData }
+    updatedConfig[status] = update
 
-    // Update local state
-    setGroupConfigData(mergedConfig)
-
-    // Append merged to group Id for top level config
-    updateConfig({
-      [group.Id]: mergedConfig
-    })
-    
-  }
-
-  /**
-   * Update local state and config if making custom changes to those positions
-   * @param  {[type]} type [description]
-   * @return {[type]}      [description]
-   */
-  const handleToggleOptions = type => {
-    
-    // Toggle display
-    if (type === 'open') {
-      setShowOpen(!showOpen)
-      setGroupConfigData(prevState => {
-
-        // Toggle exclusiion from config generation
-        prevState[type].exclude = showOpen
-
-        // Update parent config
-        updateConfig({
-          [group.Id]: prevState
-        })
-        return prevState
-      })
-
-    // For closed  
-    } else {
-      setShowClosed(!showClosed)
-      setGroupConfigData(prevState => {
-
-        // Toggle exclusiion from config generation
-        prevState[type].exclude = showClosed
-
-        // Update parent config
-        updateConfig({
-          [group.Id]: prevState
-        })
-        return prevState
-      })
-    }
+    // Update local and parent state
+    setGroupConfigData(updatedConfig)
+    updateConfig(group.Id, updatedConfig)
   }
 
   /**
@@ -92,7 +39,7 @@ const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
       <Switch
         labelText="Open Positions"
         isChecked={showOpen}
-        onToggle={() => handleToggleOptions('open')}
+        onToggle={setShowOpen}
       />
     </Flex>
   )
@@ -105,7 +52,7 @@ const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
       <Switch
         labelText="Closed Positions"
         isChecked={showClosed}
-        onToggle={() => handleToggleOptions('closed')}
+        onToggle={setShowClosed}
       />
     </Flex>
   )
@@ -128,6 +75,8 @@ const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
       {showOptions && openConfig}
       {showOptions && showOpen ?
         <Config
+          group={group}
+          data={data && data.open ? data.open : {}}
           status="open"
           positionKeys={positionKeys}
           subtradeKeys={subtradeKeys}
@@ -139,6 +88,8 @@ const TradeGroup = ({ group, positionKeys, subtradeKeys, updateConfig }) => {
       {showOptions && closedConfig}
       {showOptions && showClosed ?
         <Config
+          group={group}
+          data={data && data.closed ? data.closed : {}}
           status="closed"
           positionKeys={positionKeys}
           subtradeKeys={subtradeKeys}
