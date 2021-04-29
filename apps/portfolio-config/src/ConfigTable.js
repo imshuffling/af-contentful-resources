@@ -29,13 +29,39 @@ const dateFormats = [
   }
 ]
 
-const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateStatusConfig }) => {
+const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, defaultType, updateStatusConfig }) => {
+
+  /**
+   * Build initial config state from incoming data
+   */
+  const setInitialConfig = () => {
+
+    // Build merging objects
+    const initialDefaultSort = defaultSort ? { defaultSort: defaultSort } : null
+    const initialDefaultType = defaultSort && defaultType ? { defaultType: defaultType } : null
+    const initialDefaultDirection = defaultSort && defaultDirection ? { defaultDirection: defaultDirection } : null
+
+    // Merge data and update local and parent states
+    const mergedData = {
+      ...initialDefaultSort,
+      ...initialDefaultType,
+      ...initialDefaultDirection,
+      [type]: data
+    }
+
+    return mergedData
+  }
 
   /**
    * Set data states and initial refs
    */
-  const [columnConfigData, setColumnConfigData] = useState([])
+  const [columnConfigData, setColumnConfigData] = useState(setInitialConfig)
   const tableForm = useRef(null);
+
+  /**
+   * Remove sorting options for subtrades
+   */
+  const isSubtrades = type === 'subtrades' ? true : false
 
   /**
    * Pass through to imitate form submit and grab all rows of fields
@@ -60,7 +86,7 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
    * Treated as a faux submit
    */
   const handleOnSubmit = event => {
-    
+
     // Stop actual form progression
     event.preventDefault()    
 
@@ -72,6 +98,7 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
     let tempObject = {}
     let defaultSort = null
     let defaultDirection = null
+    let defaultType = null
     for (const entry of formData.entries()) {
 
       // Set mutable key var
@@ -101,9 +128,10 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
       if (entry[0].includes('defaultSort')) {
         key = 'defaultSort'
         defaultSort = entry[1]
+        if (tempObject.type) defaultType = tempObject.type
       }
 
-      // If row selected for sort and option is selected, save for congi
+      // If row selected for sort and option is selected, save for config
       if (tempObject.defaultSort && entry[0] === 'defaultDirection' && entry[1]) defaultDirection = entry[1]
 
       // Build row data object      
@@ -127,11 +155,13 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
 
       // Cleanup
       defaultSort = defaultSort ? { defaultSort: defaultSort } : null
+      defaultType = defaultSort && defaultType ? { defaultType: defaultType } : null
       defaultDirection = defaultSort && defaultDirection ? { defaultDirection: defaultDirection } : null
 
       // Merge data and update local and parent states
       const mergedData = {
         ...defaultSort,
+        ...defaultType,
         ...defaultDirection,
         [type]: rows
       }
@@ -140,6 +170,20 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
     }
 
   }
+
+  /**
+   * Build headers for table
+   */
+  const headers = (
+    <TableRow>
+      <TableCell>Data</TableCell>
+      <TableCell>Label</TableCell>
+      <TableCell>Format</TableCell>
+      {!isSubtrades && <TableCell>Sort By</TableCell>}
+      {!isSubtrades && <TableCell>Direction</TableCell>}
+      <TableCell></TableCell>
+    </TableRow>
+  )
 
   /**
    * Build rows from from data
@@ -153,6 +197,7 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
         index={index}
         data={row}
         keys={keys}
+        type={type}
         dateFormats={dateFormats}
         defaultSort={defaultSort}
         defaultDirection={defaultDirection}
@@ -171,14 +216,7 @@ const ConfigTable = ({ data, type, keys, defaultSort, defaultDirection, updateSt
       >
       <Table className="config-table f36-margin-bottom--s">
         <TableHead>
-          <TableRow>
-            <TableCell>Data</TableCell>
-            <TableCell>Label</TableCell>
-            <TableCell>Format</TableCell>
-            <TableCell>Sort By</TableCell>
-            <TableCell>Direction</TableCell>
-            <TableCell></TableCell>
-          </TableRow>
+          {headers}
         </TableHead>
         <TableBody>
           {rows}

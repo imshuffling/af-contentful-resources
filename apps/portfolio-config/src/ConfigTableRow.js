@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TableRow, TableCell, Icon, Select, Option, TextInput, RadioButton, ModalConfirm } from '@contentful/forma-36-react-components'
 
-const ConfigTableRow = ({ index, data, keys, dateFormats, defaultSort, defaultDirection, updateColumns, removeRow }) => {
+const ConfigTableRow = ({ index, data, keys, type, dateFormats, defaultSort, defaultDirection, updateColumns, removeRow }) => {
 
   /**
    * Map date type column to appropriate keys for dropdown
@@ -17,6 +17,7 @@ const ConfigTableRow = ({ index, data, keys, dateFormats, defaultSort, defaultDi
   /**
    * Input state
    */
+  const [initialLoad, setInitialLoad] = useState(true)
   const [columnKey, setColumnKey] = useState(data.name ? data.name : '')
   const [columnLabel, setColumnLabel] = useState(data.label ? data.label : '')
   const [columnFormat, setColumnFormat] = useState(initialFormat)
@@ -26,13 +27,22 @@ const ConfigTableRow = ({ index, data, keys, dateFormats, defaultSort, defaultDi
   /**
    * Set state for display elements
    */
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false)
+
+  /**
+   * Remove sorting options for subtrades
+   */
+  const isSubtrades = type === 'subtrades' ? true : false
 
   /**
    * Push update to parent on state change
    */
   useEffect(() => {
-    handleInputChange()
+    if (initialLoad) {
+      setInitialLoad(false)
+    } else {
+      handleInputChange()
+    }
   }, [columnKey, columnLabel, columnFormat, sortDirection])
 
   /**
@@ -84,9 +94,21 @@ const ConfigTableRow = ({ index, data, keys, dateFormats, defaultSort, defaultDi
     >
       <Option value="">Default</Option>
       <Option value="currency">Currency</Option>
-      <Option value="percentage">Percentage</Option>
+      <Option value="percent">Percent</Option>
       {dateFormats.map(row => <Option key={row.key} value={row.key}>{row.label}</Option>)}
     </Select>
+  )
+
+  /**
+   * Sorting by radio
+   */
+  const sortByRadio = (
+    <RadioButton
+      name="defaultSort"
+      value={columnKey}
+      onClick={handleInputChange}
+      checked={defaultSort === data.name && true}
+    />
   )
 
   /**
@@ -117,15 +139,8 @@ const ConfigTableRow = ({ index, data, keys, dateFormats, defaultSort, defaultDi
           />
         </TableCell>
         <TableCell>{formatSelect}</TableCell>
-        <TableCell align="center">
-          <RadioButton
-            name="defaultSort"
-            value={columnKey}
-            onClick={handleInputChange}
-            checked={defaultSort === data.name && true}
-          />
-        </TableCell>
-        <TableCell>{directionSelect}</TableCell>
+        {!isSubtrades && <TableCell align="center">{sortByRadio}</TableCell>}
+        {!isSubtrades && <TableCell>{directionSelect}</TableCell>}
         <TableCell>
           <input type="hidden" name="reset" value={true} />
           <Icon icon="Delete"

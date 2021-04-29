@@ -32,6 +32,7 @@ const App = ({ sdk }) => {
   const [portfolioId, setPortfolioId] = useState(sdk.entry.fields.portfolioId && sdk.entry.fields.portfolioId.getValue() ? sdk.entry.fields.portfolioId.getValue() : null)
   const appParameters = sdk.parameters.instance ? sdk.parameters.instance : null
 
+
   /**
    * Set default vars/state for data retrieval
    */
@@ -50,7 +51,7 @@ const App = ({ sdk }) => {
   /**
    * Make updates on field changes
    */
-  const valueChangeHandler = value => {
+  const handlePortfolioId = value => {
     setPortfolioId(sdk.entry.fields.portfolioId && sdk.entry.fields.portfolioId.getValue() ? sdk.entry.fields.portfolioId.getValue() : null)
   }
 
@@ -58,7 +59,7 @@ const App = ({ sdk }) => {
    * Add listener for SDK field changes
    */
   useEffect(() => {
-    sdk.entry.fields.portfolioId.onValueChanged(valueChangeHandler);
+    sdk.entry.fields.portfolioId.onValueChanged(handlePortfolioId);
   }, []);
 
   /**
@@ -201,10 +202,7 @@ const App = ({ sdk }) => {
    */
   const tradeGroupsList = []
   for (const group of tradeGroups) {
-
-    // TODO
     const data = config && config[group.Id] ? config[group.Id] : {}
-
     tradeGroupsList.push(
       <TradeGroup
         key={group.Id}

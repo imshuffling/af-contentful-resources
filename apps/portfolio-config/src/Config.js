@@ -111,6 +111,7 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
         keys={positionKeys}
         defaultSort={data.defaultSort && data.defaultSort}
         defaultDirection={data.defaultDirection && data.defaultDirection}
+        defaultType={data.defaultType && data.defaultType}
         updateStatusConfig={updateStatusConfig}
       />
     </Flex>
@@ -128,6 +129,7 @@ const Config = ({ group, data, status, positionKeys, subtradeKeys, updateTradeGr
         keys={subtradeKeys}
         defaultSort={data.defaultSort && data.defaultSort}
         defaultDirection={data.defaultDirection && data.defaultDirection}
+        defaultType={data.defaultType && data.defaultType}
         updateStatusConfig={updateStatusConfig}
       />
     </Flex>

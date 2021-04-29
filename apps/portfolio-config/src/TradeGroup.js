@@ -14,7 +14,7 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
   const [showOpen, setShowOpen] = useState(data && data.open ? true : false)
   const [isEnabled, setIsEnabled] = useState(Object.keys(data).length > 0 ? true : false)
   const [showClosed, setShowClosed] = useState(data && data.closed ? true : false)
-  const [groupConfigData, setGroupConfigData] = useState({})
+  const [groupConfigData, setGroupConfigData] = useState(data ? data : {})
   const [showModal, setShowModal] = useState(false);
 
   /**
@@ -126,7 +126,6 @@ const TradeGroup = ({ group, data, positionKeys, subtradeKeys, updateConfig }) =
           <Switch
             labelText="Show Custom Config"
             isChecked={showOptions}
-            onToggle={showOptions}
             className="f36-margin-left--s trade-group__toggle"
           />
         </Flex>
