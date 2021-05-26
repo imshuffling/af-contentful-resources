@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Switch, TextField, Flex, ValidationMessage, Button } from '@contentful/forma-36-react-components'
+import { Switch, TextField, Flex, ValidationMessage, Button, Note, Spinner, Paragraph } from '@contentful/forma-36-react-components'
 
 import Lists from './Lists'
 import Template from './Template'
@@ -51,8 +51,14 @@ const App = ({ sdk }) => {
    */
   const margin = 'spacingM'
   const iterableObject = sdk.entry.fields.iterableObject && sdk.entry.fields.iterableObject.getValue() ? sdk.entry.fields.iterableObject.getValue() : initialState
+  const hasCampaign = sdk.entry.fields.iterableCampaignId && sdk.entry.fields.iterableCampaignId.getValue() ? true : false
+
   const [setup, setSetup] = useState(iterableObject.sendEmail)
+  const [showSetup, setShowSetup] = useState(!hasCampaign)
   const [data, setData] = useState(iterableObject)
+  const [processing, setProcessing] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('An error has occurred.')
+  const [hasError, setHasError] = useState(false)
 
   /**
    * Update field when data changes
@@ -75,6 +81,13 @@ const App = ({ sdk }) => {
     }
   }, [setup])
 
+  /**
+   * Add listener for SDK field changes
+   * We treat the campaign ID as a confirmation that an email has been setup
+   */
+  useEffect(() => {
+    sdk.entry.fields.iterableCampaignId.onValueChanged(handleCampaignIdChange);
+  }, []);
 
   /**
    * Update main data object, pass as callback to components
@@ -102,6 +115,74 @@ const App = ({ sdk }) => {
         [key]: value
        }
     })
+  }
+
+  /**
+   * If iterableCampaignId value is added then hide setup
+   * @param  {str} value
+   * @return {null}
+   */
+  const handleCampaignIdChange = value => {
+    if (value) {
+      setSetup(false)
+      setShowSetup(false)
+    }
+  }
+
+  /**
+   * Send request to create new campaign
+   */
+  const handleCreateCampaign = () => {
+
+    // Build final params will data from entry
+    const params = {
+      ...data,
+      "access_token": sdk.parameters.instance.wiggumApiKey,
+      "contentType": sdk.ids.contentType,
+      "article-id": sdk.ids.entry,
+      "title": sdk.entry.fields.title.getValue(),
+      "content": sdk.entry.fields.content.getValue(),
+      "dynamicContent": sdk.entry.fields.dynamicContent.getValue(),
+    }
+
+    // Update UI
+    setHasError(false)
+    setProcessing(true)
+
+    // Send request
+    postData('https://wiggum.agorafinancial.com/api/tfrsites/post/sendemail', params)
+      .then((response) => {
+
+        // Expecting an number greater than 0 as a campaign ID to confirm success
+        // Sometimes a success will return an campaign ID of 0, but we'll proceed anyway
+        if (Number.isInteger(response)) {
+
+          // Update entry with campaign ID
+          const field = sdk.entry.fields.iterableCampaignId
+          field.setValue(response.toString())
+
+        } else {
+          setHasError(true)
+          setErrorMessage('An error has occurred. Check your data and try again.')
+        }
+      })
+      .catch((error) => {
+        setHasError(true)
+        setErrorMessage('An error has occurred.')
+      })
+      .then(() => {
+        setProcessing(false)
+      })
+  }
+
+  /**
+   * Remove the iterableCampaignId and reset iterableObject
+   */
+  const handleNewCampaign = () => {
+    const field = sdk.entry.fields.iterableCampaignId
+    field.removeValue()
+    setData(initialState)
+    setShowSetup(true)
   }
 
   /**
@@ -139,11 +220,42 @@ const App = ({ sdk }) => {
   const requirements = (
     <Flex marginTop={margin}>
       <ValidationMessage>
-        The following items are required to create a campaign before publishing:<br />
+        The following items are required to create a campaign:<br />
         {data.listIds && data.listIds.length === 0 && buildRequiredItem('List Ids')}
         {!data.templateId && buildRequiredItem('Template')}
         {!data.name && buildRequiredItem('Campaign Name')}
       </ValidationMessage>
+    </Flex>
+  )
+
+  /**
+   * Build list selection
+   */
+  const campaignNotice = (
+    <Flex>
+      <Note noteType="positive">
+        An email campaign has been created for this entry.<br /><br />
+        <Button
+          onClick={handleNewCampaign}
+          size="small"
+        >
+          Setup New Campaign
+        </Button>
+      </Note>
+    </Flex>
+  )
+
+  /**
+   * Build setup toggle switch
+   */
+  const setupToggle = (
+    <Flex>
+      <Switch
+        id="sendEmail"
+        labelText="Setup Iterable campaign?"
+        isChecked={setup}
+        onToggle={() => setSetup(!setup)}
+      />
     </Flex>
   )
 
@@ -184,31 +296,63 @@ const App = ({ sdk }) => {
         href={`${sdk.parameters.instance.emailPreviewUrl}/preview?template=${data.templateId}&entry=${sdk.ids.entry}`}
         target="_blank"
         style={{ width: '100%'}}
-        icon="Cycle"
+        icon="ExternalLink"
         disabled={setup && !data.sendEmail}
       >
-        Generate email preview
+        View email preview
       </Button>
     </Flex>
   )
 
+  /**
+   * Generate button to create new campaign in Iterable
+   */
+  const create = (
+    <div className='f36-margin-top--m'>
+      <Button
+        onClick={handleCreateCampaign}
+        style={{ width: '100%'}}
+        icon="Cycle"
+        buttonType="positive"
+        disabled={!data.sendEmail || processing}
+      >
+        Create campaign
+      </Button>
+      <div className='f36-margin-top--xs'>
+        {processing && <Paragraph><Spinner /></Paragraph>}      
+        {hasError && <ValidationMessage>{errorMessage}</ValidationMessage>}
+      </div>
+    </div>
+  )
+
   return (
     <div className="app">
-      <Flex>
-        <Switch
-          id="sendEmail"
-          labelText="Setup Iterable Campaign?"
-          isChecked={setup}
-          onToggle={() => setSetup(!setup)}
-        />
-      </Flex>
+      {!showSetup && campaignNotice}
+      {showSetup && setupToggle}
       {setup && listSelect}
       {setup && templateSelect}
       {setup && simpleFields}
       {setup && !data.sendEmail ? requirements : null}
       {setup && preview}
+      {setup && create}
     </div>
   )
+}
+
+/**
+ * Simple post async function
+ * @param  {str} url
+ * @param  {obj} data
+ */
+const postData = async (url = '', data = {}) => {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: JSON.stringify(data)
+  });
+  return response.json()
 }
 
 export default App
