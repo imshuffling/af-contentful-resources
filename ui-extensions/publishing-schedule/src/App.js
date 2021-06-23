@@ -1,27 +1,14 @@
 import { useState, useEffect } from 'react'
 import {
-  Paragraph,
-  Spinner,
-  ValidationMessage,
   Flex,
   FormLabel,
   TextField,
-  CopyButton,
-  Card,
-  Typography,
-  TextLink,
-  CardActions,
-  DropdownList,
-  DropdownListItem,
-  Tag,
   HelpText,
   SelectField,
   Option,
   CheckboxField,
   Grid,
   Textarea
-
-
 } from '@contentful/forma-36-react-components'
 
 // Start and starting vars
@@ -40,24 +27,6 @@ const App = ({ sdk }) => {
   // Data config, check for old data first 
   const initialData = sdk.field.getValue();
   const [data, setData] = useState(initialData ? initialData : initialState);
-
-//   useEffect(() => {
-//     const temp = data.days.filter(item => item !== "0")
-//     console.log('temp', temp);
-// 
-//     setData(prevState => {
-//       // let days =  prevState.days
-//       const newState = { ...prevState }
-//       // if (days.includes(value.toString())) {
-//       //   days = days.filter(item => item !== value)
-//       // } else {
-//       //   days = [ ...days, value ]
-//       // }
-//       newState.days = temp
-//       return newState
-//     })
-// 
-//   }, [])
 
   /**
    * Update SDK/data on input change
@@ -175,7 +144,7 @@ const App = ({ sdk }) => {
     })
   }
 
-    /**
+  /**
    * Build array of valid dates base of supplied string
    * Break down comma separated list or line breaks
    * @param  {str} string
@@ -235,7 +204,6 @@ const App = ({ sdk }) => {
    * @return {bool}
    */
   const validateDate = string => {
-    // const regex = /^([0-2][0-9]|(3)[0-1]|[1-9])(\/)(((0)[0-9])|((1)[0-2]|[1-9]))(\/)\d{4}$/
     const regex = /^([0-2][0-9]|(3)[0-1]|[1-9])(\/)(((0)[0-9])|((1)[0-2])|[0-2][0-9]|[1-9])(\/)\d{4}$/i
     return regex.test(string)
   }

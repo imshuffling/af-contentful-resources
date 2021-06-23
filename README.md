@@ -13,6 +13,7 @@ This repo contains Contentul resources for Agora Financial.
 #### Self-Hosted URLs
 * **TinyMCE:** https://d2j79rc34v3733.cloudfront.net/tinymce/index.html
 * **TinyMCE (Optional):** https://d2j79rc34v3733.cloudfront.net/tinymce-optional/index.html
+* **Publishing Schedule:** https://d2j79rc34v3733.cloudfront.net/ui-extensions/publishing-schedule/build/index.html
 
 #### Install Github URLs
 * **Repeater:** https://github.com/AgoraFinancial/af-contentful-resources/blob/master/ui-extensions/repeater/extension.json
