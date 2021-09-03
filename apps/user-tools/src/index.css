@@ -1,0 +1,26 @@
+/**
+ * Colors based on Forma 36 presets
+ * https://f36.contentful.com/foundation/color-system/
+ * https://github.com/contentful/forma-36/blob/master/packages/forma-36-fcss/README.md
+ */
+:root {
+  --white: #FFF;
+  --gray-100: #F7F9FA;
+  --gray-200: #E7EBEE;
+  --gray-300: #CFD9E0;
+  --border-radius: 6px;
+}
+
+.filter-wrapper {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+}
+
+.filter-wrapper > *:nth-child(n+2) {
+  border-top: 1px solid var(--gray-200);
+}
+
+.filter-wrapper > *:hover {
+  background: var(--gray-100);
+}
