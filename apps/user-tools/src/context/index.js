@@ -5,44 +5,30 @@ export const AppContext = React.createContext()
 
 export const AppContextProvider = ({ sdk, children }) => {
 
-  // const initialQuery = {
-//   "query": {
-//     "content_type": null,
-//     "limit": 4,
-//     "fields": []
-//   },
-//   "change": {
-//     "fields": []
-//   }
-// }
-
+  /**
+   * Default query params
+   */
   const initialEntryQuery = {
     "content_type": null,
-    "limit": 1000
-    // "fields": [],
-    // "fields.title": "Compounding X-ray Profits: A Guide to COVID-19",
-    // "fields.title": "Compounding X-ray Profits: A Guide to",
-    // "fields.title[exists]": true,
-    // ['fields.title']: 'Compounding X-ray Profits: A Guide to Rollovers'
-    // "sys.id": "3cGnVZoSysTvOjKyoNkkIm"
+    "limit": 1000,
   }
 
-  const initialEntryUpdate = {
-    "fields": []
-  }
-
+  // Set state for app context
   const [entryQuery, setEntryQuery] = useState(initialEntryQuery)
   console.log('entryQuery', entryQuery);
 
-
-
-
-
+  /**
+   * Update the entry query params, add key/value pair or remove by key
+   * @param  {str}  key
+   * @param  {str}  value
+   * @param  {bool} remove
+   * @return {null}
+   */
   const handleUpdateEntryQuery = (key = '', value = '', remove = false) => {
 
     // Required params
     if (!key) return
-    if (!value && !remove) return
+    if (!value && !remove && key !== 'content_type') return
 
     setEntryQuery( prevState => {
 
@@ -63,7 +49,6 @@ export const AppContextProvider = ({ sdk, children }) => {
   
     })
   }
-
 
   return (
     <AppContext.Provider value={{
